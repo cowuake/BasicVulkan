@@ -56,7 +56,7 @@ void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthS
 {
     VkRenderPassBeginInfo renderPassInfo = {
         .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass      = vulkan->render_pass,
+        .renderPass      = vulkan->renderPass,
         .framebuffer     = vulkan->swapchainFramebuffers[frameIndex],
         .renderArea {
             .offset      = {0, 0},

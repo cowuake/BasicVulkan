@@ -31,6 +31,8 @@ class VulkanHandler
         VkImageView depthImageView;
         PFN_vkCreateDebugReportCallbackEXT SDL2_vkCreateDebugReportCallbackEXT = nullptr;
         const std::vector<const char*> validationLayers = {};
+        VkPipelineLayout pipelineLayout;
+        VkPipeline graphicsPipeline;
 
         VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -38,7 +40,6 @@ class VulkanHandler
 
         void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
         void createInstance();
-        void createSemaphore(VkSemaphore *semaphore);
         void createDebug();
         void createSurface();
         void selectPhysicalDevice();
@@ -48,9 +49,12 @@ class VulkanHandler
         void createImageViews();
         void setupDepthStencil();
         void createRenderPass();
+        VkShaderModule createShaderModule(const std::vector<char> &code);
+        void createGraphicsPipeline();
         void createFramebuffers();
         void createCommandPool();
         void createCommandBuffers();
+        void createSemaphore(VkSemaphore *semaphore);
         void createSemaphores();
         void createFences();
 
@@ -65,7 +69,7 @@ class VulkanHandler
         VkExtent2D swapchainSize;
         VkQueue graphicsQueue;
         VkQueue presentQueue;
-        VkRenderPass render_pass;
+        VkRenderPass renderPass;
         VkSemaphore imageAvailableSemaphore;
         VkSemaphore renderingFinishedSemaphore;
         VkSwapchainKHR swapchain;
