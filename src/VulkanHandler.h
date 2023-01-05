@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+
 #include <SDL.h>
 #include <vulkan/vulkan.h>
 
@@ -29,10 +30,12 @@ class VulkanHandler
         VkDeviceMemory depthImageMemory;
         VkImageView depthImageView;
         PFN_vkCreateDebugReportCallbackEXT SDL2_vkCreateDebugReportCallbackEXT = nullptr;
+        const std::vector<const char*> validationLayers = {};
 
         VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-        
+        VkBool32 getSupportedDepthFormat(VkPhysicalDevice physicalDevice, VkFormat *depthFormat);
+
         void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
         void createInstance();
         void createSemaphore(VkSemaphore *semaphore);
@@ -47,9 +50,9 @@ class VulkanHandler
         void createRenderPass();
         void createFramebuffers();
         void createCommandPool();
-	    void createCommandBuffers();
-	    void createSemaphores();
-	    void createFences();
+        void createCommandBuffers();
+        void createSemaphores();
+        void createFences();
 
     public:
         std::vector<VkCommandBuffer> commandBuffers;

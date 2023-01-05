@@ -24,7 +24,7 @@ public:
     {
         appType = type;
     }
-    
+
     void init()
     {
         if (appType == SDL)

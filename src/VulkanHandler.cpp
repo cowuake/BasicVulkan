@@ -1,6 +1,8 @@
 #include <set>
+
 #include <SDL.h>
 #include <SDL_vulkan.h>
+
 #include "VulkanHandler.h"
 
 VulkanHandler::VulkanHandler(SDL_Window *sdl_window, char *sdl_window_name)
@@ -10,11 +12,6 @@ VulkanHandler::VulkanHandler(SDL_Window *sdl_window, char *sdl_window_name)
 }
 
 VulkanHandler::~VulkanHandler() {}
-
-const std::vector<const char*> validationLayers = {
-    ///has bug
-    //"VK_LAYER_LUNARG_standard_validation"
-};
 
 void VulkanHandler::init()
 {
@@ -31,10 +28,10 @@ void VulkanHandler::init()
     createRenderPass();
     createFramebuffers();
 
-	createCommandPool();
-	createCommandBuffers();
-	createSemaphores();
-	createFences();
+    createCommandPool();
+    createCommandBuffers();
+    createSemaphores();
+    createFences();
 }
 
 void VulkanHandler::createInstance()
@@ -52,7 +49,6 @@ void VulkanHandler::createInstance()
         .engineVersion      = VK_MAKE_VERSION(1, 0, 0),
         .apiVersion         = VK_API_VERSION_1_0
     };
-    
 
     VkInstanceCreateInfo instanceCreateInfo = {
         .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -89,7 +85,7 @@ void VulkanHandler::createDebug()
         .flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT,
         .pfnCallback = VulkanReportFunc,
     };
-    
+
     SDL2_vkCreateDebugReportCallbackEXT(instance, &debugCallbackCreateInfo, 0, &debugCallback);
 }
 
@@ -176,7 +172,7 @@ void VulkanHandler::createDevice()
         .queueCount       = 1,
         .pQueuePriorities = &queuePriority,
     };
-    
+
     //https://en.wikipedia.org/wiki/Anisotropic_filtering
     VkPhysicalDeviceFeatures deviceFeatures = {};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
@@ -192,7 +188,7 @@ void VulkanHandler::createDevice()
         .ppEnabledExtensionNames = deviceExtensions.data(),
         .pEnabledFeatures        = &deviceFeatures,
     };
-    
+
     vkCreateDevice(physical_devices, &createInfo, nullptr, &device);
 
     vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);
@@ -221,9 +217,9 @@ void VulkanHandler::createSwapchain(bool resize)
         surfaceFormats.data());
 
     // if(surfaceFormats[0].format != VK_FORMAT_B8G8R8A8_UNORM)
-	// {
+    // {
     //     throw std::runtime_error("surfaceFormats[0].format != VK_FORMAT_B8G8R8A8_UNORM");
-	// }
+    // }
 
     surfaceFormat = surfaceFormats[0];
     SDL_Vulkan_GetDrawableSize(window, &width, &height);
@@ -283,7 +279,7 @@ VkImageView VulkanHandler::createImageView(VkImage image, VkFormat format, VkIma
             .baseMipLevel    = 0,
             .levelCount      = 1,
             .baseArrayLayer  = 0,
-            .layerCount      = 1,    
+            .layerCount      = 1,
         },
     };
 
@@ -306,28 +302,27 @@ void VulkanHandler::createImageViews()
     }
 }
 
-VkBool32 getSupportedDepthFormat(VkPhysicalDevice physicalDevice, VkFormat *depthFormat)
+VkBool32 VulkanHandler::getSupportedDepthFormat(VkPhysicalDevice physicalDevice, VkFormat *depthFormat)
 {
-	std::vector<VkFormat> depthFormats = {
-		VK_FORMAT_D32_SFLOAT_S8_UINT,
-		VK_FORMAT_D32_SFLOAT,
-		VK_FORMAT_D24_UNORM_S8_UINT,
-		VK_FORMAT_D16_UNORM_S8_UINT,
-		VK_FORMAT_D16_UNORM
-	};
+    std::vector<VkFormat> depthFormats = {
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM};
 
-	for (auto& format : depthFormats)
-	{
-		VkFormatProperties formatProps;
-		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProps);
-		if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-		{
-			*depthFormat = format;
-			return true;
-		}
-	}
+    for (auto &format : depthFormats)
+    {
+        VkFormatProperties formatProps;
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProps);
+        if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        {
+            *depthFormat = format;
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 uint32_t VulkanHandler::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -368,7 +363,6 @@ void VulkanHandler::createImage(
         .sharingMode   = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
-    
 
     if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
     {
@@ -419,7 +413,7 @@ void VulkanHandler::createRenderPass()
         .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
     attachments.push_back(attachment1);
-	
+
     VkAttachmentDescription attachment2 {
         .format         = depthFormat,
         .samples        = VK_SAMPLE_COUNT_1_BIT,
@@ -432,17 +426,17 @@ void VulkanHandler::createRenderPass()
     };
     attachments.push_back(attachment2);
 
-	VkAttachmentReference colorReference = {
+    VkAttachmentReference colorReference = {
         .attachment = 0,
-	    .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-	
-	VkAttachmentReference depthReference = {
+
+    VkAttachmentReference depthReference = {
         .attachment = 1,
         .layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
-	
-	VkSubpassDescription subpassDescription = {
+
+    VkSubpassDescription subpassDescription = {
         .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .inputAttachmentCount    = 0,
         .pInputAttachments       = nullptr,
@@ -453,7 +447,7 @@ void VulkanHandler::createRenderPass()
         .preserveAttachmentCount = 0,
         .pPreserveAttachments    = nullptr,
     };
-	
+
 	std::vector<VkSubpassDependency> dependencies;
 
     VkSubpassDependency dependency {
@@ -467,17 +461,17 @@ void VulkanHandler::createRenderPass()
     };
     dependencies.push_back(dependency);
 
-	VkRenderPassCreateInfo renderPassInfo = {
-        .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+    VkRenderPassCreateInfo renderPassInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .attachmentCount = static_cast<uint32_t>(attachments.size()),
-        .pAttachments    = attachments.data(),
-        .subpassCount    = 1,
-        .pSubpasses      = &subpassDescription,
+        .pAttachments = attachments.data(),
+        .subpassCount = 1,
+        .pSubpasses = &subpassDescription,
         .dependencyCount = static_cast<uint32_t>(dependencies.size()),
-        .pDependencies   = dependencies.data(),
+        .pDependencies = dependencies.data(),
     };
-	
-	vkCreateRenderPass(device, &renderPassInfo, nullptr, &render_pass);
+
+    vkCreateRenderPass(device, &renderPassInfo, nullptr, &render_pass);
 }
 
 void VulkanHandler::createFramebuffers()
@@ -486,9 +480,9 @@ void VulkanHandler::createFramebuffers()
 
     for (size_t i = 0; i < swapchainImageViews.size(); i++)
     {
-		std::vector<VkImageView> attachments(2);
-		attachments[0] = swapchainImageViews[i];
-		attachments[1] = depthImageView;
+        std::vector<VkImageView> attachments(2);
+        attachments[0] = swapchainImageViews[i];
+        attachments[1] = depthImageView;
 
         VkFramebufferCreateInfo framebufferInfo = {
             .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
@@ -499,7 +493,7 @@ void VulkanHandler::createFramebuffers()
             .height          = swapchainSize.height,
             .layers          = 1,
         };
-        
+
         if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapchainFramebuffers[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to create framebuffer!");
@@ -509,7 +503,7 @@ void VulkanHandler::createFramebuffers()
 
 void VulkanHandler::createCommandPool()
 {
-	VkResult result;
+    VkResult result;
 
     VkCommandPoolCreateInfo createInfo = {
         .sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -522,7 +516,7 @@ void VulkanHandler::createCommandPool()
 
 void VulkanHandler::createCommandBuffers()
 {
-	VkResult result;
+    VkResult result;
 
     VkCommandBufferAllocateInfo allocateInfo = {
         .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -537,7 +531,7 @@ void VulkanHandler::createCommandBuffers()
 
 void VulkanHandler::createSemaphore(VkSemaphore *semaphore)
 {
-	VkResult result;
+    VkResult result;
 
     VkSemaphoreCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -553,12 +547,12 @@ void VulkanHandler::createSemaphores()
 
 void VulkanHandler::createFences()
 {
-	uint32_t i;
-	fences.resize(swapchainImageCount);
+    uint32_t i;
+    fences.resize(swapchainImageCount);
 
     for(i = 0; i < swapchainImageCount; i++)
     {
-		VkResult result;
+        VkResult result;
 
         VkFenceCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,

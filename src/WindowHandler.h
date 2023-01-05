@@ -3,6 +3,7 @@
 
 #include <SDL.h>
 #include <vulkan/vulkan.h>
+
 #include "VulkanHandler.h"
 
 class WindowHandler

@@ -54,24 +54,24 @@ void WindowHandler::freeCommandBuffers()
 
 void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil)
 {
-	VkRenderPassBeginInfo renderPassInfo = {
-        .sType        = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass   = vulkan->render_pass,
-        .framebuffer  = vulkan->swapchainFramebuffers[frameIndex],
+    VkRenderPassBeginInfo renderPassInfo = {
+        .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .renderPass      = vulkan->render_pass,
+        .framebuffer     = vulkan->swapchainFramebuffers[frameIndex],
         .renderArea {
-            .offset   = {0, 0},
-            .extent   = vulkan->swapchainSize,
+            .offset      = {0, 0},
+            .extent      = vulkan->swapchainSize,
         },
-        .clearValueCount   = 1,
+        .clearValueCount = 1,
     };
-	
-	std::vector<VkClearValue> clearValues(2);
+
+    std::vector<VkClearValue> clearValues(2);
     clearValues[0].color = clear_color;
     clearValues[1].depthStencil = clear_depth_stencil;
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
-    
+
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
@@ -106,7 +106,7 @@ void WindowHandler::queuePresent()
         .pSwapchains        = &vulkan->swapchain,
         .pImageIndices      = &frameIndex,
     };
-    
+
     vkQueuePresentKHR(vulkan->presentQueue, &presentInfo);
     vkQueueWaitIdle(vulkan->presentQueue);
 }
