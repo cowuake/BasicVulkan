@@ -1,3 +1,4 @@
+#include <memory>
 #include <thread>
 
 #include <SDL.h>
@@ -8,33 +9,44 @@
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
 
+enum applicationType { SDL, GLFW };
+
 class Application
 {
 public:
-    WindowHandler* sdlHandler;
+    std::unique_ptr<WindowHandler> sdlHandler, glfwHandler;
     SDL_Window* sdlWindow;
     SDL_Event event;
-    WindowHandler* glfwHandler;
     GLFWwindow* glfwWindow;
-    
+    applicationType appType;
+
+    Application(enum applicationType type)
+    {
+        appType = type;
+    }
     
     void init()
     {
-        std::string sdlWindowNameStr = "SDL2 Vulkan Demo";
-        char* sdlWindowName = sdlWindowNameStr.data();
+        if (appType == SDL)
+        {
+            std::string sdlWindowNameStr = "SDL2 Vulkan Demo";
+            char *sdlWindowName = sdlWindowNameStr.data();
 
-        SDL_Init(SDL_INIT_EVERYTHING);
-        sdlWindow = SDL_CreateWindow(
-            sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
-            SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
-        sdlHandler = new WindowHandler(sdlWindow, sdlWindowName);
-
-        // std::string glfwWindowNameStr = std::string("GLFW Vulkan Demo");
-        // const char* glfwWindowName = glfwWindowNameStr.data();
-        // glfwInit();
-        // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        // glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, nullptr, nullptr);
+            SDL_Init(SDL_INIT_EVERYTHING);
+            sdlWindow = SDL_CreateWindow(
+                sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
+                SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
+            sdlHandler = std::unique_ptr<WindowHandler>(new WindowHandler(sdlWindow, sdlWindowName));
+        }
+        else if (appType == GLFW)
+        {
+            std::string glfwWindowNameStr = std::string("GLFW Vulkan Demo");
+            const char *glfwWindowName = glfwWindowNameStr.data();
+            glfwInit();
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+            glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+            glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, nullptr, nullptr);
+        }
     }
 
     void mainLoop()
@@ -42,53 +54,61 @@ public:
         bool sdlRunning = true, glfwRunning = true;
         float r = 112, g = 66, b = 20;
 
-        while (sdlRunning)
+        if (appType == SDL)
         {
-            while (SDL_PollEvent(&event))
+            while (sdlRunning)
             {
-                if (event.type == SDL_QUIT)
+                while (SDL_PollEvent(&event))
                 {
-                    sdlRunning = false;
+                    if (event.type == SDL_QUIT)
+                    {
+                        sdlRunning = false;
+                    }
                 }
+
+                sdlHandler->acquireNextImage();
+                sdlHandler->resetCommandBuffer();
+                sdlHandler->beginCommandBuffer();
+
+                VkClearColorValue clearColor = {r / 255, g / 255, b / 255, 1.0f}; // RGBA
+                VkClearDepthStencilValue clearDepthStencil = {1.0f, 0};
+                sdlHandler->beginRenderPass(clearColor, clearDepthStencil);
+
+                sdlHandler->endRenderPass();
+                sdlHandler->endCommandBuffer();
+                sdlHandler->queueSubmit();
+                sdlHandler->queuePresent();
             }
-
-            sdlHandler->acquireNextImage();
-            sdlHandler->resetCommandBuffer();
-            sdlHandler->beginCommandBuffer();
-
-            VkClearColorValue clear_color = {r/255, g/255, b/255, 1.0f}; // RGBA
-            VkClearDepthStencilValue clear_depth_stencil = {1.0f, 0};
-            sdlHandler->beginRenderPass(clear_color, clear_depth_stencil);
-            
-            sdlHandler->endRenderPass();
-            sdlHandler->endCommandBuffer();
-            sdlHandler->queueSubmit();
-            sdlHandler->queuePresent();
         }
+        else if (appType == GLFW)
+        {
+            while (glfwRunning)
+            {
+                while (!glfwWindowShouldClose(glfwWindow))
+                {
+                    glfwPollEvents();
+                }
 
-        // while (glfwRunning)
-        // {
-        //     while (!glfwWindowShouldClose(glfwWindow))
-        //     {
-        //         glfwPollEvents();
-        //     }
-
-        //     glfwRunning = false;
-        // }
+                glfwRunning = false;
+            }
+        }
     }
 
     void cleanup()
     {
-        SDL_DestroyWindow(sdlWindow);
-        sdlWindow = nullptr;
-        delete sdlHandler;
-        sdlHandler = nullptr;
-        SDL_Quit();
-
-        // glfwDestroyWindow(glfwWindow);
-        // delete glfwHandler;
-        // glfwHandler = nullptr;
-        // glfwTerminate();
+        if (appType == SDL)
+        {
+            SDL_DestroyWindow(sdlWindow);
+            sdlWindow = nullptr;
+            sdlHandler.reset();
+            SDL_Quit();
+        }
+        else if (appType == GLFW)
+        {
+            glfwDestroyWindow(glfwWindow);
+            glfwHandler.reset();
+            glfwTerminate();
+        }
     }
 
 public:
@@ -102,11 +122,15 @@ public:
 
 int main(int argc, char *argv[])
 {
-    Application app;
+    Application sdlApp(applicationType::SDL);
+    Application glfwApp(applicationType::GLFW);
 
     try
     {
-        app.run();
+        std::thread t1 {&Application::run, &sdlApp};
+        std::thread t2 {&Application::run, &glfwApp};
+
+        t1.join(); t2.join();
     }
     catch (const std::exception &e)
     {
