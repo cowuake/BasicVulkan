@@ -1,4 +1,3 @@
-#include "VulkanHandler.h"
 #include "WindowHandler.h"
 
 WindowHandler::WindowHandler(SDL_Window* sdlWindow, char* sdlWindowName)
@@ -60,7 +59,7 @@ void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthS
 	render_pass_info.renderArea.extent = vulkan->swapchainSize;
 	render_pass_info.clearValueCount   = 1;
 
-	vector<VkClearValue> clearValues(2);
+	std::vector<VkClearValue> clearValues(2);
     clearValues[0].color = clear_color;
     clearValues[1].depthStencil = clear_depth_stencil;
 

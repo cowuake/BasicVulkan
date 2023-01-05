@@ -11,21 +11,21 @@ VulkanHandler::VulkanHandler(SDL_Window *sdl_window, char *sdl_window_name)
 
 VulkanHandler::~VulkanHandler() {}
 
-const vector<const char*> validationLayers = {
+const std::vector<const char*> validationLayers = {
     ///has bug
     //"VK_LAYER_LUNARG_standard_validation"
 };
 
 void VulkanHandler::init()
 {
-    createInstance();
-    createDebug();
+    createInstance();   // Depends on SDL
+    createDebug();  // Depends on SDL
     createSurface();
     selectPhysicalDevice();
     selectQueueFamily();
     createDevice();
 
-    bool test = createSwapchain(false);
+    createSwapchain(false); // Depends on SDL
     createImageViews();
     setupDepthStencil();
     createRenderPass();
@@ -41,7 +41,7 @@ void VulkanHandler::createInstance()
 {
     unsigned int extensionCount = 0;
     SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, nullptr);
-    vector<const char *> extensionNames(extensionCount);
+    std::vector<const char *> extensionNames(extensionCount);
     SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensionNames.data());
 
     VkApplicationInfo appInfo = {};
@@ -96,7 +96,7 @@ void VulkanHandler::createSurface()
 
 void VulkanHandler::selectPhysicalDevice()
 {
-    vector<VkPhysicalDevice> physicalDevices;
+    std::vector<VkPhysicalDevice> physicalDevices;
     uint32_t physicalDeviceCount = 0;
 
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
@@ -108,7 +108,7 @@ void VulkanHandler::selectPhysicalDevice()
 
 void VulkanHandler::selectQueueFamily()
 {
-    vector<VkQueueFamilyProperties> queueFamilyProperties;
+    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
     uint32_t queueFamilyCount;
 
     vkGetPhysicalDeviceQueueFamilyProperties(physical_devices, &queueFamilyCount, nullptr);
@@ -141,8 +141,8 @@ void VulkanHandler::selectQueueFamily()
         i++;
     }
 
-    graphics_QueueFamilyIndex = graphicIndex;
-    present_QueueFamilyIndex = presentIndex;
+    graphicsQueueFamilyIndex = graphicIndex;
+    presentQueueFamilyIndex = presentIndex;
 }
 
 void VulkanHandler::createDevice()
@@ -150,8 +150,8 @@ void VulkanHandler::createDevice()
     const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     const float queue_priority[] = { 1.0f };
 
-    vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    set<uint32_t> uniqueQueueFamilies = { graphics_QueueFamilyIndex, present_QueueFamilyIndex };
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::set<uint32_t> uniqueQueueFamilies = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
 
     float queuePriority = queue_priority[0];
     for(int queueFamily : uniqueQueueFamilies)
@@ -167,7 +167,7 @@ void VulkanHandler::createDevice()
 
     VkDeviceQueueCreateInfo queueCreateInfo = {};
     queueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = graphics_QueueFamilyIndex;
+    queueCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
     queueCreateInfo.queueCount       = 1;
     queueCreateInfo.pQueuePriorities = &queuePriority;
 
@@ -189,15 +189,15 @@ void VulkanHandler::createDevice()
 
     vkCreateDevice(physical_devices, &createInfo, nullptr, &device);
 
-    vkGetDeviceQueue(device, graphics_QueueFamilyIndex, 0, &graphicsQueue);
-    vkGetDeviceQueue(device, present_QueueFamilyIndex, 0, &presentQueue);
+    vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);
+    vkGetDeviceQueue(device, presentQueueFamilyIndex, 0, &presentQueue);
 }
 
-bool VulkanHandler::createSwapchain(bool resize)
+void VulkanHandler::createSwapchain(bool resize)
 {
-    vector<VkSurfaceFormatKHR> surfaceFormats;
+    std::vector<VkSurfaceFormatKHR> surfaceFormats;
     uint32_t surfaceFormatsCount;
-    uint32_t queueFamilyIndices[] = {graphics_QueueFamilyIndex, present_QueueFamilyIndex};
+    uint32_t queueFamilyIndices[] = {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
     int width, height = 0;
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_devices, surface, &surfaceCapabilities);
@@ -242,7 +242,7 @@ bool VulkanHandler::createSwapchain(bool resize)
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    if (graphics_QueueFamilyIndex != present_QueueFamilyIndex)
+    if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
     {
         createInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
@@ -262,8 +262,6 @@ bool VulkanHandler::createSwapchain(bool resize)
     vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr);
     swapchainImages.resize(swapchainImageCount);
     vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, swapchainImages.data());
-
-    return true;
 }
 
 VkImageView VulkanHandler::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
@@ -282,7 +280,7 @@ VkImageView VulkanHandler::createImageView(VkImage image, VkFormat format, VkIma
     VkImageView imageView;
     if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to create texture image view!");
+        throw std::runtime_error("Failed to create texture image view!");
     }
 
     return imageView;
@@ -335,7 +333,7 @@ uint32_t VulkanHandler::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlag
         }
     }
 
-    throw std::runtime_error("failed to find suitable memory type!");
+    throw std::runtime_error("Failed to find suitable memory type!");
 }
 
 void VulkanHandler::createImage(
@@ -360,7 +358,7 @@ void VulkanHandler::createImage(
 
     if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to create image!");
+        throw std::runtime_error("Failed to create image!");
     }
 
     VkMemoryRequirements memRequirements;
@@ -372,7 +370,7 @@ void VulkanHandler::createImage(
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
     if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate image memory!");
+        throw std::runtime_error("Failed to allocate image memory!");
     }
 
     vkBindImageMemory(device, image, imageMemory, 0);
@@ -393,7 +391,7 @@ void VulkanHandler::setupDepthStencil()
 
 void VulkanHandler::createRenderPass()
 {
-    vector<VkAttachmentDescription> attachments(2);
+    std::vector<VkAttachmentDescription> attachments(2);
 
 	attachments[0].format         = surfaceFormat.format;
 	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -432,7 +430,7 @@ void VulkanHandler::createRenderPass()
 	subpassDescription.pPreserveAttachments    = nullptr;
 	subpassDescription.pResolveAttachments     = nullptr;
 
-	vector<VkSubpassDependency> dependencies(1);
+	std::vector<VkSubpassDependency> dependencies(1);
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -474,7 +472,7 @@ void VulkanHandler::createFramebuffers()
 
         if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapchainFramebuffers[i]) != VK_SUCCESS)
         {
-            throw std::runtime_error("failed to create framebuffer!");
+            throw std::runtime_error("Failed to create framebuffer!");
         }
     }
 }
@@ -486,7 +484,7 @@ void VulkanHandler::createCommandPool()
     VkCommandPoolCreateInfo createInfo = {};
     createInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     createInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-    createInfo.queueFamilyIndex = graphics_QueueFamilyIndex;
+    createInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
 
     vkCreateCommandPool(device, &createInfo, nullptr, &commandPool);
 }

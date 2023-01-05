@@ -11,30 +11,32 @@ const int WINDOW_HEIGHT = 720;
 class Application
 {
 public:
-    WindowHandler* handler;
-
+    WindowHandler* sdlHandler;
     SDL_Window* sdlWindow;
     SDL_Event event;
     char* sdlWindowName = std::string("SDL2 Vulkan Demo").data();
 
+    WindowHandler* glfwHandler;
     GLFWwindow* glfwWindow;
     const char* glfwWindowName = std::string("GLFW Vulkan Demo").data();
-    bool sdlRunning, glfwRunning;
     
     void init()
     {
+        SDL_Init(SDL_INIT_EVERYTHING);
         sdlWindow = SDL_CreateWindow(
             sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
             SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
+        sdlHandler = new WindowHandler(sdlWindow, sdlWindowName);
 
-        glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, NULL, NULL);
-            
-        handler = new WindowHandler(sdlWindow, sdlWindowName);
-        sdlRunning = true;
+        // glfwInit();
+        // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        // glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, nullptr, nullptr);
     }
 
     void mainLoop()
     {
+        bool sdlRunning = true, glfwRunning = true;
         float r = 112, g = 66, b = 20;
 
         while (sdlRunning)
@@ -47,36 +49,48 @@ public:
                 }
             }
 
-            handler->acquireNextImage();
-            handler->resetCommandBuffer();
-            handler->beginCommandBuffer();
+            sdlHandler->acquireNextImage();
+            sdlHandler->resetCommandBuffer();
+            sdlHandler->beginCommandBuffer();
 
             VkClearColorValue clear_color = {r/255, g/255, b/255, 1.0f}; // RGBA
             VkClearDepthStencilValue clear_depth_stencil = {1.0f, 0};
-            handler->beginRenderPass(clear_color, clear_depth_stencil);
+            sdlHandler->beginRenderPass(clear_color, clear_depth_stencil);
             
-            handler->endRenderPass();
-            handler->endCommandBuffer();
-            handler->queueSubmit();
-            handler->queuePresent();
+            sdlHandler->endRenderPass();
+            sdlHandler->endCommandBuffer();
+            sdlHandler->queueSubmit();
+            sdlHandler->queuePresent();
         }
+
+        // while (glfwRunning)
+        // {
+        //     while (!glfwWindowShouldClose(glfwWindow))
+        //     {
+        //         glfwPollEvents();
+        //     }
+
+        //     glfwRunning = false;
+        // }
     }
 
     void cleanup()
     {
         SDL_DestroyWindow(sdlWindow);
         sdlWindow = nullptr;
-
-        delete handler;
-        handler = nullptr;
-
+        delete sdlHandler;
+        sdlHandler = nullptr;
         SDL_Quit();
+
+        // glfwDestroyWindow(glfwWindow);
+        // delete glfwHandler;
+        // glfwHandler = nullptr;
+        // glfwTerminate();
     }
 
 public:
     void run()
     {
-        SDL_Init(SDL_INIT_EVERYTHING);
         init();
         mainLoop();
         cleanup();

@@ -6,8 +6,6 @@
 #include <SDL.h>
 #include <vulkan/vulkan.h>
 
-using namespace std;
-
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 
 class VulkanHandler
@@ -16,16 +14,16 @@ class VulkanHandler
         SDL_Window *window;
         char * window_name;
         VkInstance instance;
-        vector<VkExtensionProperties> instance_extension;
+        std::vector<VkExtensionProperties> instance_extension;
         VkDebugReportCallbackEXT debugCallback;
         VkSurfaceKHR surface;
         VkPhysicalDevice physical_devices;
-        uint32_t graphics_QueueFamilyIndex;
-        uint32_t present_QueueFamilyIndex;
+        uint32_t graphicsQueueFamilyIndex;
+        uint32_t presentQueueFamilyIndex;
         VkSurfaceCapabilitiesKHR surfaceCapabilities;
         VkSurfaceFormatKHR surfaceFormat;
         uint32_t swapchainImageCount;
-        vector<VkImageView> swapchainImageViews;
+        std::vector<VkImageView> swapchainImageViews;
         VkFormat depthFormat;
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
@@ -43,7 +41,7 @@ class VulkanHandler
         void selectPhysicalDevice();
         void selectQueueFamily();
         void createDevice();
-        bool createSwapchain(bool resize);
+        void createSwapchain(bool resize);
         void createImageViews();
         void setupDepthStencil();
         void createRenderPass();
@@ -54,10 +52,10 @@ class VulkanHandler
 	    void createFences();
 
     public:
-        vector<VkCommandBuffer> commandBuffers;
-        vector<VkFence> fences;
-        vector<VkFramebuffer> swapchainFramebuffers;
-        vector<VkImage> swapchainImages;
+        std::vector<VkCommandBuffer> commandBuffers;
+        std::vector<VkFence> fences;
+        std::vector<VkFramebuffer> swapchainFramebuffers;
+        std::vector<VkImage> swapchainImages;
 
         VkCommandPool commandPool;
         VkDevice device;
