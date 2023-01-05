@@ -14,6 +14,7 @@ private:
     uint32_t frameIndex;
     VkCommandBuffer commandBuffer;
     VkImage image;
+    VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
 public:
     WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName);

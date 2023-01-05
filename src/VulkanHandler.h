@@ -30,6 +30,7 @@ class VulkanHandler
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
         VkImageView depthImageView;
+        PFN_vkCreateDebugReportCallbackEXT SDL2_vkCreateDebugReportCallbackEXT = nullptr;
 
         VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);

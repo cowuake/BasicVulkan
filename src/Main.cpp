@@ -1,6 +1,9 @@
 #include <SDL.h>
 #include "WindowHandler.h"
 
+const int WINDOW_WIDTH = 1280;
+const int WINDOW_HEIGHT = 720;
+
 class Application
 {
 private:
@@ -8,11 +11,15 @@ private:
     SDL_Window *window;
     SDL_Event event;
     bool running;
-    char *window_name = "SDL2 Vulkan Demo";
+    string windowNameSDL = std::string("SDL2 Vulkan Demo");
+    char *window_name = windowNameSDL.data();
 
     void Init()
     {
-        window = SDL_CreateWindow(window_name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
+        window = SDL_CreateWindow(
+            window_name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
+            SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
+            
         handler = new WindowHandler(window, window_name);
         running = true;
     }

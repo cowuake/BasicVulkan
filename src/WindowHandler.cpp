@@ -75,7 +75,6 @@ void WindowHandler::EndRenderPass()
     vkCmdEndRenderPass(commandBuffer);
 }
 
-VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 void WindowHandler::QueueSubmit()
 {
     VkSubmitInfo submitInfo = {};
