@@ -14,20 +14,23 @@ public:
     WindowHandler* sdlHandler;
     SDL_Window* sdlWindow;
     SDL_Event event;
-    char* sdlWindowName = std::string("SDL2 Vulkan Demo").data();
-
     WindowHandler* glfwHandler;
     GLFWwindow* glfwWindow;
-    const char* glfwWindowName = std::string("GLFW Vulkan Demo").data();
+    
     
     void init()
     {
+        std::string sdlWindowNameStr = "SDL2 Vulkan Demo";
+        char* sdlWindowName = sdlWindowNameStr.data();
+
         SDL_Init(SDL_INIT_EVERYTHING);
         sdlWindow = SDL_CreateWindow(
             sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
             SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
         sdlHandler = new WindowHandler(sdlWindow, sdlWindowName);
 
+        // std::string glfwWindowNameStr = std::string("GLFW Vulkan Demo");
+        // const char* glfwWindowName = glfwWindowNameStr.data();
         // glfwInit();
         // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
