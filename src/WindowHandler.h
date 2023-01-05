@@ -17,19 +17,19 @@ private:
     VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
 public:
-    WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName);
+    WindowHandler(SDL_Window* sdlWindow, char* sdlWindowName);
     
-    void AcquireNextImage();
-    void ResetCommandBuffer();
-    void BeginCommandBuffer();
-    void EndCommandBuffer();
-    void FreeCommandBuffers();
-    void BeginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil);
-    void EndRenderPass();
-    void QueueSubmit();
-    void QueuePresent();
-    void SetViewport(int width, int height);
-    void SetScissor(int width, int height);
+    void acquireNextImage();
+    void resetCommandBuffer();
+    void beginCommandBuffer();
+    void endCommandBuffer();
+    void freeCommandBuffers();
+    void beginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil);
+    void endRenderPass();
+    void queueSubmit();
+    void queuePresent();
+    void setViewport(int width, int height);
+    void setScissor(int width, int height);
 
     ~WindowHandler();
 };

@@ -1,17 +1,17 @@
 #include "VulkanHandler.h"
 #include "WindowHandler.h"
 
-WindowHandler::WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName)
+WindowHandler::WindowHandler(SDL_Window* sdlWindow, char* sdlWindowName)
 {
     window = sdlWindow;
     windowName = sdlWindowName;
     vulkan = new VulkanHandler(window, windowName);
-    vulkan->Init();
+    vulkan->init();
 }
 
 WindowHandler::~WindowHandler() {}
 
-void WindowHandler::AcquireNextImage()
+void WindowHandler::acquireNextImage()
 {
     vkAcquireNextImageKHR(
         vulkan->device,
@@ -28,12 +28,12 @@ void WindowHandler::AcquireNextImage()
     image = vulkan->swapchainImages[frameIndex];
 }
 
-void WindowHandler::ResetCommandBuffer()
+void WindowHandler::resetCommandBuffer()
 {
     vkResetCommandBuffer(commandBuffer, 0);
 }
 
-void WindowHandler::BeginCommandBuffer()
+void WindowHandler::beginCommandBuffer()
 {
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -41,17 +41,17 @@ void WindowHandler::BeginCommandBuffer()
     vkBeginCommandBuffer(commandBuffer, &beginInfo);
 }
 
-void WindowHandler::EndCommandBuffer()
+void WindowHandler::endCommandBuffer()
 {
     vkEndCommandBuffer(commandBuffer);
 }
 
-void WindowHandler::FreeCommandBuffers()
+void WindowHandler::freeCommandBuffers()
 {
     vkFreeCommandBuffers(vulkan->device, vulkan->commandPool, 1, &commandBuffer);
 }
 
-void WindowHandler::BeginRenderPass(VkClearColorValue clear_color,VkClearDepthStencilValue clear_depth_stencil)
+void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil)
 {
 	VkRenderPassBeginInfo render_pass_info = {};
 	render_pass_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -70,12 +70,12 @@ void WindowHandler::BeginRenderPass(VkClearColorValue clear_color,VkClearDepthSt
     vkCmdBeginRenderPass(commandBuffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void WindowHandler::EndRenderPass()
+void WindowHandler::endRenderPass()
 {
     vkCmdEndRenderPass(commandBuffer);
 }
 
-void WindowHandler::QueueSubmit()
+void WindowHandler::queueSubmit()
 {
     VkSubmitInfo submitInfo = {};
     submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -90,7 +90,7 @@ void WindowHandler::QueueSubmit()
     vkQueueSubmit(vulkan->graphicsQueue, 1, &submitInfo, vulkan->fences[frameIndex]);
 }
 
-void WindowHandler::QueuePresent()
+void WindowHandler::queuePresent()
 {
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -104,7 +104,7 @@ void WindowHandler::QueuePresent()
     vkQueueWaitIdle(vulkan->presentQueue);
 }
 
-void WindowHandler::SetViewport(int width,int height)
+void WindowHandler::setViewport(int width,int height)
 {
     VkViewport viewport;
     viewport.width    = (float)width / 2;
@@ -117,7 +117,7 @@ void WindowHandler::SetViewport(int width,int height)
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 }
 
-void WindowHandler::SetScissor(int width,int height)
+void WindowHandler::setScissor(int width,int height)
 {
     VkRect2D scissor;
     scissor.extent.width  = width / 2;

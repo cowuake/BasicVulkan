@@ -32,26 +32,26 @@ class VulkanHandler
         VkImageView depthImageView;
         PFN_vkCreateDebugReportCallbackEXT SDL2_vkCreateDebugReportCallbackEXT = nullptr;
 
-        VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-        uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+        VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         
-        void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-        void CreateInstance();
-        void CreateSemaphore(VkSemaphore *semaphore);
-        void CreateDebug();
-        void CreateSurface();
-        void SelectPhysicalDevice();
-        void SelectQueueFamily();
-        void CreateDevice();
-        bool CreateSwapchain(bool resize);
-        void CreateImageViews();
-        void SetupDepthStencil();
-        void CreateRenderPass();
-        void CreateFramebuffers();
-        void CreateCommandPool();
-	    void CreateCommandBuffers();        
-	    void CreateSemaphores();
-	    void CreateFences();
+        void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+        void createInstance();
+        void createSemaphore(VkSemaphore *semaphore);
+        void createDebug();
+        void createSurface();
+        void selectPhysicalDevice();
+        void selectQueueFamily();
+        void createDevice();
+        bool createSwapchain(bool resize);
+        void createImageViews();
+        void setupDepthStencil();
+        void createRenderPass();
+        void createFramebuffers();
+        void createCommandPool();
+	    void createCommandBuffers();        
+	    void createSemaphores();
+	    void createFences();
 
     public:
         vector<VkCommandBuffer> commandBuffers;
@@ -71,7 +71,7 @@ class VulkanHandler
 
         VulkanHandler(SDL_Window *sdl_window, char *sdl_window_name);
 
-        void Init();
+        void init();
 
         ~VulkanHandler();
 };

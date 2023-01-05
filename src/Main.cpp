@@ -1,4 +1,8 @@
+#include <thread>
+
 #include <SDL.h>
+#include <GLFW/glfw3.h>
+
 #include "WindowHandler.h"
 
 const int WINDOW_WIDTH = 1280;
@@ -6,55 +10,62 @@ const int WINDOW_HEIGHT = 720;
 
 class Application
 {
-private:
-    WindowHandler *handler;
-    SDL_Window *window;
-    SDL_Event event;
-    bool running;
-    string windowNameSDL = std::string("SDL2 Vulkan Demo");
-    char *window_name = windowNameSDL.data();
+public:
+    WindowHandler* handler;
 
-    void Init()
+    SDL_Window* sdlWindow;
+    SDL_Event event;
+    char* sdlWindowName = std::string("SDL2 Vulkan Demo").data();
+
+    GLFWwindow* glfwWindow;
+    const char* glfwWindowName = std::string("GLFW Vulkan Demo").data();
+    bool sdlRunning, glfwRunning;
+    
+    void init()
     {
-        window = SDL_CreateWindow(
-            window_name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
+        sdlWindow = SDL_CreateWindow(
+            sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
             SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
+
+        glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, NULL, NULL);
             
-        handler = new WindowHandler(window, window_name);
-        running = true;
+        handler = new WindowHandler(sdlWindow, sdlWindowName);
+        sdlRunning = true;
     }
 
-    void MainLoop()
+    void mainLoop()
     {
-        while (running)
+        float r = 112, g = 66, b = 20;
+
+        while (sdlRunning)
         {
             while (SDL_PollEvent(&event))
             {
                 if (event.type == SDL_QUIT)
                 {
-                    running = false;
+                    sdlRunning = false;
                 }
             }
 
-            handler->AcquireNextImage();
-            handler->ResetCommandBuffer();
-            handler->BeginCommandBuffer();
+            handler->acquireNextImage();
+            handler->resetCommandBuffer();
+            handler->beginCommandBuffer();
 
-            VkClearColorValue clear_color = {0, 255, 0, 255}; // RGBA
+            VkClearColorValue clear_color = {r/255, g/255, b/255, 1.0f}; // RGBA
             VkClearDepthStencilValue clear_depth_stencil = {1.0f, 0};
-            handler->BeginRenderPass(clear_color, clear_depth_stencil);
+            handler->beginRenderPass(clear_color, clear_depth_stencil);
             
-            handler->EndRenderPass();
-            handler->EndCommandBuffer();
-            handler->QueueSubmit();
-            handler->QueuePresent();
+            handler->endRenderPass();
+            handler->endCommandBuffer();
+            handler->queueSubmit();
+            handler->queuePresent();
         }
     }
 
-    void Cleanup()
+    void cleanup()
     {
-        SDL_DestroyWindow(window);
-        window = nullptr;
+        SDL_DestroyWindow(sdlWindow);
+        sdlWindow = nullptr;
 
         delete handler;
         handler = nullptr;
@@ -63,12 +74,12 @@ private:
     }
 
 public:
-    void Run()
+    void run()
     {
         SDL_Init(SDL_INIT_EVERYTHING);
-        Init();
-        MainLoop();
-        Cleanup();
+        init();
+        mainLoop();
+        cleanup();
     }
 };
 
@@ -78,7 +89,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        app.Run();
+        app.run();
     }
     catch (const std::exception &e)
     {
