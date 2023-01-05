@@ -42,7 +42,7 @@ public:
         }
         else if (appType == GLFW)
         {
-            std::string glfwWindowNameStr = std::string("GLFW Vulkan Demo");
+            std::string glfwWindowNameStr = "GLFW Vulkan Demo";
             const char *glfwWindowName = glfwWindowNameStr.data();
 
             glfwInit();

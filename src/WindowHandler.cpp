@@ -34,9 +34,11 @@ void WindowHandler::resetCommandBuffer()
 
 void WindowHandler::beginCommandBuffer()
 {
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+    };
+
     vkBeginCommandBuffer(commandBuffer, &beginInfo);
 }
 
@@ -52,21 +54,25 @@ void WindowHandler::freeCommandBuffers()
 
 void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil)
 {
-	VkRenderPassBeginInfo render_pass_info = {};
-	render_pass_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	render_pass_info.renderPass        = vulkan->render_pass;render_pass_info.framebuffer = vulkan->swapchainFramebuffers[frameIndex];
-	render_pass_info.renderArea.offset = {0, 0};
-	render_pass_info.renderArea.extent = vulkan->swapchainSize;
-	render_pass_info.clearValueCount   = 1;
-
+	VkRenderPassBeginInfo renderPassInfo = {
+        .sType        = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .renderPass   = vulkan->render_pass,
+        .framebuffer  = vulkan->swapchainFramebuffers[frameIndex],
+        .renderArea {
+            .offset   = {0, 0},
+            .extent   = vulkan->swapchainSize,
+        },
+        .clearValueCount   = 1,
+    };
+	
 	std::vector<VkClearValue> clearValues(2);
     clearValues[0].color = clear_color;
     clearValues[1].depthStencil = clear_depth_stencil;
 
-    render_pass_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    render_pass_info.pClearValues = clearValues.data();
-
-    vkCmdBeginRenderPass(commandBuffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+    
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void WindowHandler::endRenderPass()
@@ -76,29 +82,31 @@ void WindowHandler::endRenderPass()
 
 void WindowHandler::queueSubmit()
 {
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.waitSemaphoreCount   = 1;
-    submitInfo.pWaitSemaphores      = &vulkan->imageAvailableSemaphore;
-    submitInfo.pWaitDstStageMask    = &waitDestStageMask;
-    submitInfo.commandBufferCount   = 1;
-    submitInfo.pCommandBuffers      = &commandBuffer;
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores    = &vulkan->renderingFinishedSemaphore;
+    VkSubmitInfo submitInfo = {
+        .sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount   = 1,
+        .pWaitSemaphores      = &vulkan->imageAvailableSemaphore,
+        .pWaitDstStageMask    = &waitDestStageMask,
+        .commandBufferCount   = 1,
+        .pCommandBuffers      = &commandBuffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores    = &vulkan->renderingFinishedSemaphore,
+    };
 
     vkQueueSubmit(vulkan->graphicsQueue, 1, &submitInfo, vulkan->fences[frameIndex]);
 }
 
 void WindowHandler::queuePresent()
 {
-    VkPresentInfoKHR presentInfo = {};
-    presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores    = &vulkan->renderingFinishedSemaphore;
-    presentInfo.swapchainCount     = 1;
-    presentInfo.pSwapchains        = &vulkan->swapchain;
-    presentInfo.pImageIndices      = &frameIndex;
-
+    VkPresentInfoKHR presentInfo = {
+        .sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores    = &vulkan->renderingFinishedSemaphore,
+        .swapchainCount     = 1,
+        .pSwapchains        = &vulkan->swapchain,
+        .pImageIndices      = &frameIndex,
+    };
+    
     vkQueuePresentKHR(vulkan->presentQueue, &presentInfo);
     vkQueueWaitIdle(vulkan->presentQueue);
 }

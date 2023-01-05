@@ -47,7 +47,7 @@ class VulkanHandler
         void createRenderPass();
         void createFramebuffers();
         void createCommandPool();
-	    void createCommandBuffers();        
+	    void createCommandBuffers();
 	    void createSemaphores();
 	    void createFences();
 
