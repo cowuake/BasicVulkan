@@ -12,7 +12,7 @@ class VulkanHandler
 {
     private:
         SDL_Window *window;
-        char * window_name;
+        char *window_name;
         VkInstance instance;
         std::vector<VkExtensionProperties> instance_extension;
         VkDebugReportCallbackEXT debugCallback;

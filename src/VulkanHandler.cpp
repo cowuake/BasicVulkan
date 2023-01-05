@@ -69,9 +69,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanReportFunc(
     uint64_t obj,
     size_t location,
     int32_t code,
-    const char* layerPrefix,
-    const char* msg,
-    void* userData)
+    const char *layerPrefix,
+    const char *msg,
+    void *userData)
 {
     printf("VULKAN VALIDATION: %s\n", msg);
     return VK_FALSE;

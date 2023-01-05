@@ -15,9 +15,9 @@ class Application
 {
 public:
     std::unique_ptr<WindowHandler> sdlHandler, glfwHandler;
-    SDL_Window* sdlWindow;
+    SDL_Window *sdlWindow;
+    GLFWwindow *glfwWindow;
     SDL_Event event;
-    GLFWwindow* glfwWindow;
     applicationType appType;
 
     Application(enum applicationType type)
@@ -33,18 +33,22 @@ public:
             char *sdlWindowName = sdlWindowNameStr.data();
 
             SDL_Init(SDL_INIT_EVERYTHING);
+
             sdlWindow = SDL_CreateWindow(
                 sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
                 SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
+
             sdlHandler = std::unique_ptr<WindowHandler>(new WindowHandler(sdlWindow, sdlWindowName));
         }
         else if (appType == GLFW)
         {
             std::string glfwWindowNameStr = std::string("GLFW Vulkan Demo");
             const char *glfwWindowName = glfwWindowNameStr.data();
+
             glfwInit();
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
             glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, nullptr, nullptr);
         }
     }

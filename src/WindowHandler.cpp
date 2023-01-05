@@ -1,6 +1,6 @@
 #include "WindowHandler.h"
 
-WindowHandler::WindowHandler(SDL_Window* sdlWindow, char* sdlWindowName)
+WindowHandler::WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName)
 {
     window = sdlWindow;
     windowName = sdlWindowName;

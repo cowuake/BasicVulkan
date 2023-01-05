@@ -17,8 +17,8 @@ private:
     VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
 public:
-    WindowHandler(SDL_Window* sdlWindow, char* sdlWindowName);
-    
+    WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName);
+
     void acquireNextImage();
     void resetCommandBuffer();
     void beginCommandBuffer();
