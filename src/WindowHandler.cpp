@@ -2,17 +2,21 @@
 
 #include "WindowHandler.h"
 
-WindowHandler::WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName)
+FrameDrawer::FrameDrawer(SDL_Window *sdlWindow, char *sdlWindowName)
 {
     window = sdlWindow;
     windowName = sdlWindowName;
+
+    clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+    clearDepthStencil = {1.0f, 0};
+
     vulkan = new VulkanHandler(window, windowName);
     vulkan->init();
 }
 
-WindowHandler::~WindowHandler() {}
+FrameDrawer::~FrameDrawer() {}
 
-void WindowHandler::acquireNextImage()
+void FrameDrawer::acquireNextImage()
 {
     vkAcquireNextImageKHR (
         vulkan->device,
@@ -37,7 +41,7 @@ void WindowHandler::acquireNextImage()
     image = vulkan->swapchainImages[frameIndex];
 }
 
-void WindowHandler::resetCommandBuffer()
+void FrameDrawer::resetCommandBuffer()
 {
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
     {
@@ -45,7 +49,7 @@ void WindowHandler::resetCommandBuffer()
     }
 }
 
-void WindowHandler::beginCommandBuffer()
+void FrameDrawer::beginCommandBuffer()
 {
     VkCommandBufferBeginInfo beginInfo {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -58,7 +62,7 @@ void WindowHandler::beginCommandBuffer()
     }
 }
 
-void WindowHandler::endCommandBuffer()
+void FrameDrawer::endCommandBuffer()
 {
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
     {
@@ -66,12 +70,12 @@ void WindowHandler::endCommandBuffer()
     }
 }
 
-void WindowHandler::freeCommandBuffers()
+void FrameDrawer::freeCommandBuffers()
 {
     vkFreeCommandBuffers(vulkan->device, vulkan->commandPool, 1, &commandBuffer);
 }
 
-void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil)
+void FrameDrawer::beginRenderPass()
 {
     VkRenderPassBeginInfo renderPassInfo {
         .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -85,8 +89,8 @@ void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthS
     };
 
     std::vector<VkClearValue> clearValues(2);
-    clearValues[0].color = clear_color;
-    clearValues[1].depthStencil = clear_depth_stencil;
+    clearValues[0].color = clearColor;
+    clearValues[1].depthStencil = clearDepthStencil;
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
@@ -94,12 +98,12 @@ void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthS
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void WindowHandler::endRenderPass()
+void FrameDrawer::endRenderPass()
 {
     vkCmdEndRenderPass(commandBuffer);
 }
 
-void WindowHandler::queueSubmit()
+void FrameDrawer::queueSubmit()
 {
     VkSubmitInfo submitInfo {
         .sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -118,7 +122,7 @@ void WindowHandler::queueSubmit()
     }
 }
 
-void WindowHandler::queuePresent()
+void FrameDrawer::queuePresent()
 {
     VkPresentInfoKHR presentInfo {
         .sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -141,7 +145,7 @@ void WindowHandler::queuePresent()
     }
 }
 
-void WindowHandler::setViewport(int width,int height)
+void FrameDrawer::setViewport(int width,int height)
 {
     VkViewport viewport {
         .x        = 0,
@@ -155,7 +159,7 @@ void WindowHandler::setViewport(int width,int height)
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 }
 
-void WindowHandler::setScissor(int width,int height)
+void FrameDrawer::setScissor(int width,int height)
 {
     VkRect2D scissor {
         .offset {
@@ -169,4 +173,21 @@ void WindowHandler::setScissor(int width,int height)
     };
 
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+}
+
+void FrameDrawer::setClearColor(int R, int G, int B, int A)
+{
+    clearColor = {(float)R/255, (float)G/255, (float)B/255, (float)A/255};
+}
+
+void FrameDrawer::drawNext()
+{
+    acquireNextImage();
+    resetCommandBuffer();
+    beginCommandBuffer();
+    beginRenderPass();
+    endRenderPass();
+    endCommandBuffer();
+    queueSubmit();
+    queuePresent();
 }

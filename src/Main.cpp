@@ -11,11 +11,10 @@ const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
 
 enum applicationType { SDL, GLFW };
-
 class Application
 {
 public:
-    std::unique_ptr<WindowHandler> sdlHandler, glfwHandler;
+    std::unique_ptr<FrameDrawer> sdlHandler, glfwHandler;
     SDL_Window *sdlWindow;
     GLFWwindow *glfwWindow;
     SDL_Event event;
@@ -39,7 +38,7 @@ public:
                 sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
                 SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
 
-            sdlHandler = std::unique_ptr<WindowHandler>(new WindowHandler(sdlWindow, sdlWindowName));
+            sdlHandler = std::unique_ptr<FrameDrawer>(new FrameDrawer(sdlWindow, sdlWindowName));
         }
         else if (appType == GLFW)
         {
@@ -61,6 +60,8 @@ public:
 
         if (appType == SDL)
         {
+            sdlHandler->setClearColor(122, 66, 20, 255);
+
             while (sdlRunning)
             {
                 while (SDL_PollEvent(&event))
@@ -71,18 +72,7 @@ public:
                     }
                 }
 
-                sdlHandler->acquireNextImage();
-                sdlHandler->resetCommandBuffer();
-                sdlHandler->beginCommandBuffer();
-
-                VkClearColorValue clearColor {r / 255, g / 255, b / 255, 1.0f}; // RGBA
-                VkClearDepthStencilValue clearDepthStencil {1.0f, 0};
-                sdlHandler->beginRenderPass(clearColor, clearDepthStencil);
-
-                sdlHandler->endRenderPass();
-                sdlHandler->endCommandBuffer();
-                sdlHandler->queueSubmit();
-                sdlHandler->queuePresent();
+                sdlHandler->drawNext();
             }
         }
         else if (appType == GLFW)
@@ -132,10 +122,10 @@ int main(int argc, char *argv[])
 
     try
     {
-        std::thread t1 {&Application::run, &sdlApp};
-        std::thread t2 {&Application::run, &glfwApp};
+        std::thread sdl {&Application::run, &sdlApp};
+        std::thread glfw {&Application::run, &glfwApp};
 
-        t1.join(); t2.join();
+        sdl.join(); glfw.join();
     }
     catch (const std::exception &e)
     {

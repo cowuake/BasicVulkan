@@ -6,7 +6,7 @@
 
 #include "VulkanHandler.h"
 
-class WindowHandler
+class FrameDrawer
 {
 private:
     VulkanHandler *vulkan;
@@ -16,23 +16,30 @@ private:
     VkCommandBuffer commandBuffer;
     VkImage image;
     VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-public:
-    WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName);
+    VkClearColorValue clearColor;
+    VkClearDepthStencilValue clearDepthStencil;
 
     void acquireNextImage();
     void resetCommandBuffer();
     void beginCommandBuffer();
     void endCommandBuffer();
     void freeCommandBuffers();
-    void beginRenderPass(VkClearColorValue clearColor, VkClearDepthStencilValue clearDepthStencil);
+    void beginRenderPass();
     void endRenderPass();
     void queueSubmit();
     void queuePresent();
     void setViewport(int width, int height);
     void setScissor(int width, int height);
 
-    ~WindowHandler();
+public:
+    FrameDrawer(SDL_Window *sdlWindow, char *sdlWindowName);
+
+    void setClearColor(int R, int G, int B, int A);
+    void setClearDepthStencil();
+
+    void drawNext();
+
+    ~FrameDrawer();
 };
 
 #endif
