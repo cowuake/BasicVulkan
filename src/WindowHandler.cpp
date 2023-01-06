@@ -158,11 +158,15 @@ void WindowHandler::setViewport(int width,int height)
 void WindowHandler::setScissor(int width,int height)
 {
     VkRect2D scissor {
-        .extent.width  = width / 2,
-        .extent.height = height,
-        .offset.x      = 0,
-        .offset.y      = 0,
-    }
+        .offset {
+            .x      = 0,
+            .y      = 0,
+        },
+        .extent {
+            .width  = width / 2,
+            .height = height,
+        },
+    };
 
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
