@@ -17,7 +17,7 @@ add_executable(
     ${CMAKE_PROJECT_NAME}
     ${SOURCE_DIR}/Main.cpp
     ${SOURCE_DIR}/VulkanHandler.cpp
-    ${SOURCE_DIR}/WindowHandler.cpp
+    ${SOURCE_DIR}/FrameDrawer.cpp
     )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} Vulkan::Vulkan)

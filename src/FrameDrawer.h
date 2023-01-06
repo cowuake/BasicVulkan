@@ -35,6 +35,7 @@ public:
     FrameDrawer(SDL_Window *sdlWindow, char *sdlWindowName);
 
     void setClearColor(int R, int G, int B, int A);
+    void setClearColor(int R, int G, int B);
     void setClearDepthStencil();
 
     void drawNext();

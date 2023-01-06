@@ -5,7 +5,7 @@
 #include <SDL.h>
 #include <GLFW/glfw3.h>
 
-#include "WindowHandler.h"
+#include "FrameDrawer.h"
 
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
@@ -56,11 +56,11 @@ public:
     void mainLoop()
     {
         bool sdlRunning = true, glfwRunning = true;
-        float r = 112, g = 66, b = 20;
+        int r = 112, g = 66, b = 20;
 
         if (appType == SDL)
         {
-            sdlHandler->setClearColor(122, 66, 20, 255);
+            sdlHandler->setClearColor(r, g, b);
 
             while (sdlRunning)
             {

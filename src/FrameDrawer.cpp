@@ -1,6 +1,6 @@
 #include <stdexcept>
 
-#include "WindowHandler.h"
+#include "FrameDrawer.h"
 
 FrameDrawer::FrameDrawer(SDL_Window *sdlWindow, char *sdlWindowName)
 {
@@ -145,7 +145,7 @@ void FrameDrawer::queuePresent()
     }
 }
 
-void FrameDrawer::setViewport(int width,int height)
+void FrameDrawer::setViewport(int width, int height)
 {
     VkViewport viewport {
         .x        = 0,
@@ -159,7 +159,7 @@ void FrameDrawer::setViewport(int width,int height)
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 }
 
-void FrameDrawer::setScissor(int width,int height)
+void FrameDrawer::setScissor(int width, int height)
 {
     VkRect2D scissor {
         .offset {
@@ -167,8 +167,8 @@ void FrameDrawer::setScissor(int width,int height)
             .y      = 0,
         },
         .extent {
-            .width  = width / 2,
-            .height = height,
+            .width  = static_cast<uint32_t>(width / 2),
+            .height = static_cast<uint32_t>(height),
         },
     };
 
@@ -178,6 +178,11 @@ void FrameDrawer::setScissor(int width,int height)
 void FrameDrawer::setClearColor(int R, int G, int B, int A)
 {
     clearColor = {(float)R/255, (float)G/255, (float)B/255, (float)A/255};
+}
+
+void FrameDrawer::setClearColor(int R, int G, int B)
+{
+    setClearColor(R, G, B, 255);
 }
 
 void FrameDrawer::drawNext()
