@@ -1,3 +1,4 @@
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -6,6 +7,12 @@
 #include <SDL_vulkan.h>
 
 #include "VulkanHandler.h"
+
+#define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
+
+const std::vector<const char*> validationLayers {
+    "VK_LAYER_KHRONOS_validation",
+};
 
 VulkanHandler::VulkanHandler(SDL_Window *sdl_window, char *sdl_window_name)
 {
@@ -27,12 +34,42 @@ void VulkanHandler::init()
     createImageViews();
     setupDepthStencil();
     createRenderPass();
-    // createGraphicsPipeline();
+    createGraphicsPipeline();
     createFramebuffers();
     createCommandPool();
     createCommandBuffers();
     createSemaphores();
     createFences();
+}
+
+bool VulkanHandler::checkValidationLayers()
+{
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+    std::vector<VkLayerProperties> availableLayers(layerCount);
+    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+    for (const char *layerName : validationLayers)
+    {
+        bool layerFound = false;
+
+        for (const auto &layerProperties : availableLayers)
+        {
+            if (strcmp(layerName, layerProperties.layerName) == 0)
+            {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void VulkanHandler::createInstance()
@@ -60,7 +97,15 @@ void VulkanHandler::createInstance()
         .ppEnabledExtensionNames = extensionNames.data(),
     };
 
-    vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+    if (!checkValidationLayers())
+    {
+        throw std::runtime_error("Validation layers needed, but not available!");
+    }
+
+    if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create instance!");
+    }
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanReportFunc(
@@ -92,7 +137,10 @@ void VulkanHandler::createDebug()
 
 void VulkanHandler::createSurface()
 {
-    SDL_Vulkan_CreateSurface(window, instance, &surface);
+    if (SDL_Vulkan_CreateSurface(window, instance, &surface) != VK_SUCCESS)
+    {
+        std::runtime_error("Failed to create surface!");
+    }
 }
 
 void VulkanHandler::selectPhysicalDevice()
@@ -190,7 +238,10 @@ void VulkanHandler::createDevice()
         .pEnabledFeatures        = &deviceFeatures,
     };
 
-    vkCreateDevice(physical_devices, &createInfo, nullptr, &device);
+    if (vkCreateDevice(physical_devices, &createInfo, nullptr, &device) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create device!");
+    }
 
     vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);
     vkGetDeviceQueue(device, presentQueueFamilyIndex, 0, &presentQueue);
@@ -607,6 +658,14 @@ void VulkanHandler::createGraphicsPipeline()
         throw std::runtime_error("Failed to create pipeline layout!");
     }
 
+    VkPipelineDepthStencilStateCreateInfo depthStencil {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+    };
+
     VkGraphicsPipelineCreateInfo pipelineInfo {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = nullptr,
@@ -619,7 +678,7 @@ void VulkanHandler::createGraphicsPipeline()
         .pViewportState = &viewportState,
         .pRasterizationState = &rasterizer,
         .pMultisampleState = &multisampling,
-        .pDepthStencilState = nullptr,
+        .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicState,
         .layout = pipelineLayout,

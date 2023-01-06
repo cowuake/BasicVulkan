@@ -7,8 +7,6 @@
 #include <SDL.h>
 #include <vulkan/vulkan.h>
 
-#define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
-
 class VulkanHandler
 {
     private:
@@ -29,8 +27,7 @@ class VulkanHandler
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
         VkImageView depthImageView;
-        PFN_vkCreateDebugReportCallbackEXT SDL2_vkCreateDebugReportCallbackEXT = nullptr;
-        const std::vector<const char*> validationLayers = {};
+        PFN_vkCreateDebugReportCallbackEXT SDL2_vkCreateDebugReportCallbackEXT;
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
 
@@ -57,6 +54,7 @@ class VulkanHandler
         void createSemaphore(VkSemaphore *semaphore);
         void createSemaphores();
         void createFences();
+        bool checkValidationLayers();
 
     public:
         std::vector<VkCommandBuffer> commandBuffers;
