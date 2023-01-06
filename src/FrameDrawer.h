@@ -9,8 +9,9 @@
 class FrameDrawer
 {
 private:
-    VulkanHandler *vulkan;
-    SDL_Window *window;
+    SDL_Window *sdlWindow;
+    GLFWwindow *glfwWindow;
+
     char *windowName;
     uint32_t frameIndex;
     VkCommandBuffer commandBuffer;
@@ -32,7 +33,10 @@ private:
     void setScissor(int width, int height);
 
 public:
+    VulkanHandler *vulkan;
+
     FrameDrawer(SDL_Window *sdlWindow, char *sdlWindowName);
+    FrameDrawer(GLFWwindow *glfwWindow, char *glfwWindowName);
 
     void setClearColor(int R, int G, int B, int A);
     void setClearColor(int R, int G, int B);

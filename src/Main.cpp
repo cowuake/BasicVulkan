@@ -43,13 +43,15 @@ public:
         else if (appType == ApplicationType::GLFW)
         {
             std::string glfwWindowNameStr = "GLFW Vulkan Demo";
-            const char *glfwWindowName = glfwWindowNameStr.data();
+            char *glfwWindowName = glfwWindowNameStr.data();
 
             glfwInit();
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
             glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, nullptr, nullptr);
+
+            glfwHandler = std::unique_ptr<FrameDrawer>(new FrameDrawer(glfwWindow, glfwWindowName));
         }
     }
 
@@ -82,9 +84,10 @@ public:
                 while (!glfwWindowShouldClose(glfwWindow))
                 {
                     glfwPollEvents();
+                    glfwHandler->drawNext();
                 }
 
-                glfwRunning = false;
+                vkDeviceWaitIdle(glfwHandler->vulkan->device);
             }
         }
     }
@@ -122,10 +125,12 @@ int main(int argc, char *argv[])
 
     try
     {
-        std::thread sdl {&Application::run, &sdlApp};
-        std::thread glfw {&Application::run, &glfwApp};
+        // std::thread sdl {&Application::run, &sdlApp};
+        // std::thread glfw {&Application::run, &glfwApp};
 
-        sdl.join(); glfw.join();
+        // sdl.join(); glfw.join();
+
+        glfwApp.run();
     }
     catch (const std::exception &e)
     {

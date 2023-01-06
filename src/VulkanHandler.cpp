@@ -16,17 +16,17 @@ const std::vector<const char *> validationLayers {
     "VK_LAYER_KHRONOS_validation",
 };
 
-VulkanHandler::VulkanHandler(SDL_Window *sdlWindow, char *sdlWindowName)
+VulkanHandler::VulkanHandler(SDL_Window *window, char *name)
 {
-    sdlWindow = sdlWindow;
-    windowName = sdlWindowName;
+    sdlWindow = window;
+    windowName = name;
     applicationType = ApplicationType::SDL;
 }
 
-VulkanHandler::VulkanHandler(GLFWwindow *glfwWindow, char *glfwWindowName)
+VulkanHandler::VulkanHandler(GLFWwindow *window, char *name)
 {
-    glfwWindow = glfwWindow;
-    windowName = glfwWindowName;
+    glfwWindow = window;
+    windowName = name;
     applicationType = ApplicationType::GLFW;
 }
 
@@ -84,24 +84,26 @@ bool VulkanHandler::checkValidationLayers()
 
 std::vector<const char *> VulkanHandler::getRequiredInstanceExtensions()
 {
-    uint32_t extensionCount = 0;
-    std::vector<const char *> extensions;
-
     if (applicationType == ApplicationType::SDL)
     {
-        SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, nullptr);
-        //std::vector<const char *> extensions(extensionCount);
-        SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, extensions.data());
+        unsigned int extensionCount = 0;
+        bool step1 = SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, nullptr);
+        std::vector<const char *> extensions(extensionCount);
+        bool step2 = SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, extensions.data());
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+        return extensions;
     }
     else if (applicationType == ApplicationType::GLFW)
     {
+        uint32_t extensionCount = 0;
         const char **glfwExtensions;
         glfwExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
         std::vector<const char *> extensions(glfwExtensions, glfwExtensions + extensionCount);
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
 
-    return extensions;
+        return extensions;
+    }
 }
 
 void VulkanHandler::createInstance()
@@ -120,7 +122,7 @@ void VulkanHandler::createInstance()
         .apiVersion         = VK_API_VERSION_1_0,
     };
 
-    std::vector<const char *> extensions = getRequiredInstanceExtensions();
+    auto extensions = getRequiredInstanceExtensions();
 
     VkInstanceCreateInfo instanceCreateInfo {
         .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -153,15 +155,18 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanReportFunc(
 
 void VulkanHandler::createDebug()
 {
-    SDL2_vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)SDL_Vulkan_GetVkGetInstanceProcAddr();
+    if (applicationType == ApplicationType::SDL)
+    {
+        SDL2_vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)SDL_Vulkan_GetVkGetInstanceProcAddr();
 
-    VkDebugReportCallbackCreateInfoEXT debugCallbackCreateInfo {
-        .sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
-        .flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT,
-        .pfnCallback = VulkanReportFunc,
-    };
+        VkDebugReportCallbackCreateInfoEXT debugCallbackCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
+            .flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT,
+            .pfnCallback = VulkanReportFunc,
+        };
 
-    SDL2_vkCreateDebugReportCallbackEXT(instance, &debugCallbackCreateInfo, 0, &debugCallback);
+        SDL2_vkCreateDebugReportCallbackEXT(instance, &debugCallbackCreateInfo, 0, &debugCallback);
+    }
 }
 
 void VulkanHandler::createSurface()
@@ -170,12 +175,13 @@ void VulkanHandler::createSurface()
     {
         if (SDL_Vulkan_CreateSurface(sdlWindow, instance, &surface) != VK_SUCCESS)
         {
-            std::runtime_error("Failed to create surface!");
+            throw std::runtime_error("Failed to create window surface!");
         }
     }
     else if (applicationType == ApplicationType::GLFW)
     {
-        if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &surface) != VK_SUCCESS) {
+        if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &surface) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to create window surface!");
         }
     }
@@ -260,9 +266,9 @@ void VulkanHandler::createDevice()
         .pQueuePriorities = &queuePriority,
     };
 
-    //https://en.wikipedia.org/wiki/Anisotropic_filtering
-    VkPhysicalDeviceFeatures deviceFeatures {};
-    deviceFeatures.samplerAnisotropy = VK_TRUE;
+    VkPhysicalDeviceFeatures deviceFeatures {
+        // .samplerAnisotropy = VK_TRUE,
+    };
 
     VkDeviceCreateInfo createInfo {
         .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,

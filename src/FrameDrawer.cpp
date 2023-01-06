@@ -2,15 +2,24 @@
 
 #include "FrameDrawer.h"
 
-FrameDrawer::FrameDrawer(SDL_Window *sdlWindow, char *sdlWindowName)
+FrameDrawer::FrameDrawer(SDL_Window *window, char *name)
 {
-    window = sdlWindow;
-    windowName = sdlWindowName;
+    sdlWindow = window;
+    windowName = name;
 
     clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
     clearDepthStencil = {1.0f, 0};
 
-    vulkan = new VulkanHandler(window, windowName);
+    vulkan = new VulkanHandler(sdlWindow, windowName);
+    vulkan->init();
+}
+
+FrameDrawer::FrameDrawer(GLFWwindow *window, char *name)
+{
+    glfwWindow = window;
+    windowName = name;
+
+    vulkan = new VulkanHandler(glfwWindow, windowName);
     vulkan->init();
 }
 
