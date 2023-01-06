@@ -1,16 +1,22 @@
-#ifndef VULKAN_EXTERN_H_
-#define VULKAN_EXTERN_H_
+#ifndef VULKAN_HANDLER_H_
+#define VULKAN_HANDLER_H_
 
 #include <vector>
 
 #include <SDL.h>
+#include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
+
+enum ApplicationType { SDL, GLFW };
 
 class VulkanHandler
 {
     private:
-        SDL_Window *window;
-        char *window_name;
+        SDL_Window *sdlWindow;
+        GLFWwindow *glfwWindow;
+        char *windowName;
+        enum ApplicationType applicationType;
+
         VkInstance instance;
         std::vector<VkExtensionProperties> instance_extension;
         VkDebugReportCallbackEXT debugCallback;
@@ -54,6 +60,7 @@ class VulkanHandler
         void createSemaphores();
         void createFences();
         bool checkValidationLayers();
+        std::vector<const char *> getRequiredInstanceExtensions();
 
     public:
         std::vector<VkCommandBuffer> commandBuffers;
@@ -71,7 +78,8 @@ class VulkanHandler
         VkSemaphore renderingFinishedSemaphore;
         VkSwapchainKHR swapchain;
 
-        VulkanHandler(SDL_Window *sdl_window, char *sdl_window_name);
+        VulkanHandler(SDL_Window *sdlWindow, char *sdlWindowName);
+        VulkanHandler(GLFWwindow *glfwWindow, char *glfwWindowName);
 
         void init();
 

@@ -6,11 +6,11 @@
 #include <GLFW/glfw3.h>
 
 #include "FrameDrawer.h"
+#include "VulkanHandler.h"
 
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
 
-enum applicationType { SDL, GLFW };
 class Application
 {
 public:
@@ -18,16 +18,16 @@ public:
     SDL_Window *sdlWindow;
     GLFWwindow *glfwWindow;
     SDL_Event event;
-    applicationType appType;
+    ApplicationType appType;
 
-    Application(enum applicationType type)
+    Application(enum ApplicationType type)
     {
         appType = type;
     }
 
     void init()
     {
-        if (appType == SDL)
+        if (appType == ApplicationType::SDL)
         {
             std::string sdlWindowNameStr = "SDL2 Vulkan Demo";
             char *sdlWindowName = sdlWindowNameStr.data();
@@ -40,7 +40,7 @@ public:
 
             sdlHandler = std::unique_ptr<FrameDrawer>(new FrameDrawer(sdlWindow, sdlWindowName));
         }
-        else if (appType == GLFW)
+        else if (appType == ApplicationType::GLFW)
         {
             std::string glfwWindowNameStr = "GLFW Vulkan Demo";
             const char *glfwWindowName = glfwWindowNameStr.data();
@@ -117,8 +117,8 @@ public:
 
 int main(int argc, char *argv[])
 {
-    Application sdlApp(applicationType::SDL);
-    Application glfwApp(applicationType::GLFW);
+    Application sdlApp(ApplicationType::SDL);
+    Application glfwApp(ApplicationType::GLFW);
 
     try
     {

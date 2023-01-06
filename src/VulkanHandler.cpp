@@ -5,19 +5,29 @@
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 #include "VulkanHandler.h"
 
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 
-const std::vector<const char*> validationLayers {
+const std::vector<const char *> validationLayers {
     "VK_LAYER_KHRONOS_validation",
 };
 
-VulkanHandler::VulkanHandler(SDL_Window *sdl_window, char *sdl_window_name)
+VulkanHandler::VulkanHandler(SDL_Window *sdlWindow, char *sdlWindowName)
 {
-    window = sdl_window;
-    window_name = sdl_window_name;
+    sdlWindow = sdlWindow;
+    windowName = sdlWindowName;
+    applicationType = ApplicationType::SDL;
+}
+
+VulkanHandler::VulkanHandler(GLFWwindow *glfwWindow, char *glfwWindowName)
+{
+    glfwWindow = glfwWindow;
+    windowName = glfwWindowName;
+    applicationType = ApplicationType::GLFW;
 }
 
 VulkanHandler::~VulkanHandler() {}
@@ -72,35 +82,54 @@ bool VulkanHandler::checkValidationLayers()
     return true;
 }
 
+std::vector<const char *> VulkanHandler::getRequiredInstanceExtensions()
+{
+    uint32_t extensionCount = 0;
+    std::vector<const char *> extensions;
+
+    if (applicationType == ApplicationType::SDL)
+    {
+        SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, nullptr);
+        //std::vector<const char *> extensions(extensionCount);
+        SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, extensions.data());
+    }
+    else if (applicationType == ApplicationType::GLFW)
+    {
+        const char **glfwExtensions;
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+        std::vector<const char *> extensions(glfwExtensions, glfwExtensions + extensionCount);
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    return extensions;
+}
+
 void VulkanHandler::createInstance()
 {
-    unsigned int extensionCount = 0;
-    SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, nullptr);
-    std::vector<const char *> extensionNames(extensionCount);
-    SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensionNames.data());
+    if (!checkValidationLayers())
+    {
+        throw std::runtime_error("Validation layers needed, but not available!");
+    }
 
     VkApplicationInfo appInfo {
         .sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pApplicationName   = window_name,
+        .pApplicationName   = windowName,
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
         .pEngineName        = "No Engine",
         .engineVersion      = VK_MAKE_VERSION(1, 0, 0),
         .apiVersion         = VK_API_VERSION_1_0,
     };
 
+    std::vector<const char *> extensions = getRequiredInstanceExtensions();
+
     VkInstanceCreateInfo instanceCreateInfo {
         .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo        = &appInfo,
-        .enabledLayerCount       = validationLayers.size(),
+        .enabledLayerCount       = static_cast<uint32_t>(validationLayers.size()),
         .ppEnabledLayerNames     = validationLayers.data(),
-        .enabledExtensionCount   = extensionNames.size(),
-        .ppEnabledExtensionNames = extensionNames.data(),
+        .enabledExtensionCount   = static_cast<uint32_t>(extensions.size()),
+        .ppEnabledExtensionNames = extensions.data(),
     };
-
-    if (!checkValidationLayers())
-    {
-        throw std::runtime_error("Validation layers needed, but not available!");
-    }
 
     if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS)
     {
@@ -137,9 +166,18 @@ void VulkanHandler::createDebug()
 
 void VulkanHandler::createSurface()
 {
-    if (SDL_Vulkan_CreateSurface(window, instance, &surface) != VK_SUCCESS)
+    if (applicationType == ApplicationType::SDL)
     {
-        std::runtime_error("Failed to create surface!");
+        if (SDL_Vulkan_CreateSurface(sdlWindow, instance, &surface) != VK_SUCCESS)
+        {
+            std::runtime_error("Failed to create surface!");
+        }
+    }
+    else if (applicationType == ApplicationType::GLFW)
+    {
+        if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &surface) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create window surface!");
+        }
     }
 }
 
@@ -207,7 +245,7 @@ void VulkanHandler::createDevice()
     {
         VkDeviceQueueCreateInfo queueCreateInfo {
             .sType            =  VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = queueFamily,
+            .queueFamilyIndex = static_cast<uint32_t>(queueFamily),
             .queueCount       = 1,
             .pQueuePriorities = &queuePriority,
         };
@@ -228,12 +266,12 @@ void VulkanHandler::createDevice()
 
     VkDeviceCreateInfo createInfo {
         .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .queueCreateInfoCount    = queueCreateInfos.size(),
+        .queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size()),
         .pQueueCreateInfos       = queueCreateInfos.data(),
         //.pQueueCreateInfos       = &queueCreateInfo,
-        .enabledLayerCount       = validationLayers.size(),
+        .enabledLayerCount       = static_cast<uint32_t>(validationLayers.size()),
         .ppEnabledLayerNames     = validationLayers.data(),
-        .enabledExtensionCount   = deviceExtensions.size(),
+        .enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size()),
         .ppEnabledExtensionNames = deviceExtensions.data(),
         .pEnabledFeatures        = &deviceFeatures,
     };
@@ -274,7 +312,12 @@ void VulkanHandler::createSwapchain(bool resize)
     // }
 
     surfaceFormat = surfaceFormats[0];
-    SDL_Vulkan_GetDrawableSize(window, &width, &height);
+
+    if (applicationType == ApplicationType::SDL)
+    {
+        SDL_Vulkan_GetDrawableSize(sdlWindow, &width, &height);
+    }
+
     width = CLAMP(width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
     height = CLAMP(height, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
     swapchainSize.width = width;
