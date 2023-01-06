@@ -75,8 +75,8 @@ public:
                 sdlHandler->resetCommandBuffer();
                 sdlHandler->beginCommandBuffer();
 
-                VkClearColorValue clearColor = {r / 255, g / 255, b / 255, 1.0f}; // RGBA
-                VkClearDepthStencilValue clearDepthStencil = {1.0f, 0};
+                VkClearColorValue clearColor {r / 255, g / 255, b / 255, 1.0f}; // RGBA
+                VkClearDepthStencilValue clearDepthStencil {1.0f, 0};
                 sdlHandler->beginRenderPass(clearColor, clearDepthStencil);
 
                 sdlHandler->endRenderPass();

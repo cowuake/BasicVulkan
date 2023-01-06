@@ -47,7 +47,7 @@ void WindowHandler::resetCommandBuffer()
 
 void WindowHandler::beginCommandBuffer()
 {
-    VkCommandBufferBeginInfo beginInfo = {
+    VkCommandBufferBeginInfo beginInfo {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
     };
@@ -73,7 +73,7 @@ void WindowHandler::freeCommandBuffers()
 
 void WindowHandler::beginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil)
 {
-    VkRenderPassBeginInfo renderPassInfo = {
+    VkRenderPassBeginInfo renderPassInfo {
         .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass      = vulkan->renderPass,
         .framebuffer     = vulkan->swapchainFramebuffers[frameIndex],
@@ -101,7 +101,7 @@ void WindowHandler::endRenderPass()
 
 void WindowHandler::queueSubmit()
 {
-    VkSubmitInfo submitInfo = {
+    VkSubmitInfo submitInfo {
         .sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .waitSemaphoreCount   = 1,
         .pWaitSemaphores      = &vulkan->imageAvailableSemaphore,
@@ -143,24 +143,26 @@ void WindowHandler::queuePresent()
 
 void WindowHandler::setViewport(int width,int height)
 {
-    VkViewport viewport;
-    viewport.width    = (float)width / 2;
-    viewport.height   = (float)height;
-    viewport.minDepth = (float)0.0f;
-    viewport.maxDepth = (float)1.0f;
-    viewport.x        = 0;
-    viewport.y        = 0;
+    VkViewport viewport {
+        .x        = 0,
+        .y        = 0,
+        .width    = (float)width / 2,
+        .height   = (float)height,
+        .minDepth = (float)0.0f,
+        .maxDepth = (float)1.0f,
+    };
 
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 }
 
 void WindowHandler::setScissor(int width,int height)
 {
-    VkRect2D scissor;
-    scissor.extent.width  = width / 2;
-    scissor.extent.height = height;
-    scissor.offset.x      = 0;
-    scissor.offset.y      = 0;
+    VkRect2D scissor {
+        .extent.width  = width / 2,
+        .extent.height = height,
+        .offset.x      = 0,
+        .offset.y      = 0,
+    }
 
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
