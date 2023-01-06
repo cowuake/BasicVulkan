@@ -1,7 +1,6 @@
 #ifndef VULKAN_EXTERN_H_
 #define VULKAN_EXTERN_H_
 
-#include <iostream>
 #include <vector>
 
 #include <SDL.h>

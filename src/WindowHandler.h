@@ -25,7 +25,7 @@ public:
     void beginCommandBuffer();
     void endCommandBuffer();
     void freeCommandBuffers();
-    void beginRenderPass(VkClearColorValue clear_color, VkClearDepthStencilValue clear_depth_stencil);
+    void beginRenderPass(VkClearColorValue clearColor, VkClearDepthStencilValue clearDepthStencil);
     void endRenderPass();
     void queueSubmit();
     void queuePresent();

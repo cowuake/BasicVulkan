@@ -734,7 +734,10 @@ void VulkanHandler::createCommandPool()
         .queueFamilyIndex = graphicsQueueFamilyIndex,
     };
 
-    vkCreateCommandPool(device, &createInfo, nullptr, &commandPool);
+    if (vkCreateCommandPool(device, &createInfo, nullptr, &commandPool) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create command pool!");
+    }
 }
 
 void VulkanHandler::createCommandBuffers()
@@ -749,7 +752,11 @@ void VulkanHandler::createCommandBuffers()
     };
 
     commandBuffers.resize(swapchainImageCount);
-    vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data());
+
+    if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate command buffer!");
+    }
 }
 
 void VulkanHandler::createSemaphore(VkSemaphore *semaphore)
@@ -759,7 +766,10 @@ void VulkanHandler::createSemaphore(VkSemaphore *semaphore)
     VkSemaphoreCreateInfo createInfo {};
     createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    vkCreateSemaphore(device, &createInfo, nullptr, semaphore);
+    if (vkCreateSemaphore(device, &createInfo, nullptr, semaphore) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create semaphore!");
+    }
 }
 
 void VulkanHandler::createSemaphores()
@@ -782,6 +792,9 @@ void VulkanHandler::createFences()
             .flags = VK_FENCE_CREATE_SIGNALED_BIT,
         };
 
-        vkCreateFence(device, &createInfo, nullptr, &fences[i]);
+        if (vkCreateFence(device, &createInfo, nullptr, &fences[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create fence!");
+        }
     }
 }

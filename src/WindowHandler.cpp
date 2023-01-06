@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "WindowHandler.h"
 
 WindowHandler::WindowHandler(SDL_Window *sdlWindow, char *sdlWindowName)
@@ -12,16 +14,24 @@ WindowHandler::~WindowHandler() {}
 
 void WindowHandler::acquireNextImage()
 {
-    vkAcquireNextImageKHR(
+    vkAcquireNextImageKHR (
         vulkan->device,
         vulkan->swapchain,
         UINT64_MAX,
         vulkan->imageAvailableSemaphore,
         VK_NULL_HANDLE,
-        &frameIndex);
+        &frameIndex
+    );
 
-    vkWaitForFences(vulkan->device, 1, &vulkan->fences[frameIndex], VK_FALSE, UINT64_MAX);
-    vkResetFences(vulkan->device, 1, &vulkan->fences[frameIndex]);
+    if (vkWaitForFences(vulkan->device, 1, &vulkan->fences[frameIndex], VK_FALSE, UINT64_MAX) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to wait for fences");
+    }
+
+    if (vkResetFences(vulkan->device, 1, &vulkan->fences[frameIndex]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to reset fences!");
+    }
 
     commandBuffer = vulkan->commandBuffers[frameIndex];
     image = vulkan->swapchainImages[frameIndex];
@@ -29,7 +39,10 @@ void WindowHandler::acquireNextImage()
 
 void WindowHandler::resetCommandBuffer()
 {
-    vkResetCommandBuffer(commandBuffer, 0);
+    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to reset command buffer!");
+    }
 }
 
 void WindowHandler::beginCommandBuffer()
@@ -39,12 +52,18 @@ void WindowHandler::beginCommandBuffer()
         .flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
     };
 
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to begin command buffer!");
+    }
 }
 
 void WindowHandler::endCommandBuffer()
 {
-    vkEndCommandBuffer(commandBuffer);
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("");
+    }
 }
 
 void WindowHandler::freeCommandBuffers()
@@ -93,22 +112,33 @@ void WindowHandler::queueSubmit()
         .pSignalSemaphores    = &vulkan->renderingFinishedSemaphore,
     };
 
-    vkQueueSubmit(vulkan->graphicsQueue, 1, &submitInfo, vulkan->fences[frameIndex]);
+    if (vkQueueSubmit(vulkan->graphicsQueue, 1, &submitInfo, vulkan->fences[frameIndex]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to submit draw command buffer!");
+    }
 }
 
 void WindowHandler::queuePresent()
 {
-    VkPresentInfoKHR presentInfo = {
+    VkPresentInfoKHR presentInfo {
         .sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
         .pWaitSemaphores    = &vulkan->renderingFinishedSemaphore,
         .swapchainCount     = 1,
         .pSwapchains        = &vulkan->swapchain,
         .pImageIndices      = &frameIndex,
+        .pResults           = nullptr,
     };
 
-    vkQueuePresentKHR(vulkan->presentQueue, &presentInfo);
-    vkQueueWaitIdle(vulkan->presentQueue);
+    if (vkQueuePresentKHR(vulkan->presentQueue, &presentInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("");
+    }
+
+    if (vkQueueWaitIdle(vulkan->presentQueue) != VK_SUCCESS)
+    {
+        throw std::runtime_error("");
+    }
 }
 
 void WindowHandler::setViewport(int width,int height)
