@@ -23,14 +23,15 @@ private:
     void acquireNextImage();
     void resetCommandBuffer();
     void beginCommandBuffer();
-    void endCommandBuffer();
-    void freeCommandBuffers();
     void beginRenderPass();
     void endRenderPass();
+    void endCommandBuffer();
+    void freeCommandBuffers();
     void queueSubmit();
     void queuePresent();
     void setViewport(int width, int height);
     void setScissor(int width, int height);
+    void draw();
 
 public:
     VulkanHandler *vulkan;
@@ -42,7 +43,7 @@ public:
     void setClearColor(int R, int G, int B);
     void setClearDepthStencil();
 
-    void drawNext();
+    void nextFrame();
 
     ~FrameDrawer();
 };

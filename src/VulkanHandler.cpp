@@ -310,7 +310,12 @@ void VulkanHandler::selectQueueFamily()
         }
 
         VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+
+        if (vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to get physical device surface support!");
+        }
+
         if(queueFamily.queueCount > 0 && presentSupport)
         {
             presentIndex = i;
@@ -879,8 +884,6 @@ void VulkanHandler::createCommandPool()
 
 void VulkanHandler::createCommandBuffers()
 {
-    VkResult result;
-
     VkCommandBufferAllocateInfo allocateInfo {
         .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool        = commandPool,
@@ -898,8 +901,6 @@ void VulkanHandler::createCommandBuffers()
 
 void VulkanHandler::createSemaphore(VkSemaphore *semaphore)
 {
-    VkResult result;
-
     VkSemaphoreCreateInfo createInfo {};
     createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 

@@ -86,6 +86,10 @@ void FrameDrawer::freeCommandBuffers()
 
 void FrameDrawer::beginRenderPass()
 {
+    std::vector<VkClearValue> clearValues(2);
+    clearValues[0].color = clearColor;
+    clearValues[1].depthStencil = clearDepthStencil;
+
     VkRenderPassBeginInfo renderPassInfo {
         .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass      = vulkan->renderPass,
@@ -94,15 +98,9 @@ void FrameDrawer::beginRenderPass()
             .offset      = {0, 0},
             .extent      = vulkan->swapchainSize,
         },
-        .clearValueCount = 1,
+        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
+        .pClearValues    = clearValues.data(),
     };
-
-    std::vector<VkClearValue> clearValues(2);
-    clearValues[0].color = clearColor;
-    clearValues[1].depthStencil = clearDepthStencil;
-
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
@@ -184,6 +182,11 @@ void FrameDrawer::setScissor(int width, int height)
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
+void FrameDrawer::draw()
+{
+    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+}
+
 void FrameDrawer::setClearColor(int R, int G, int B, int A)
 {
     clearColor = {(float)R/255, (float)G/255, (float)B/255, (float)A/255};
@@ -194,12 +197,15 @@ void FrameDrawer::setClearColor(int R, int G, int B)
     setClearColor(R, G, B, 255);
 }
 
-void FrameDrawer::drawNext()
+void FrameDrawer::nextFrame()
 {
     acquireNextImage();
     resetCommandBuffer();
     beginCommandBuffer();
     beginRenderPass();
+    setViewport(1280, 720);
+    setScissor(1280, 720);
+    draw();
     endRenderPass();
     endCommandBuffer();
     queueSubmit();

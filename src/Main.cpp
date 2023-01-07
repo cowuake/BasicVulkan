@@ -85,7 +85,7 @@ public:
                     }
                 }
 
-                sdlHandler->drawNext();
+                sdlHandler->nextFrame();
             }
         }
         else if (appType == GLFW)
@@ -95,7 +95,7 @@ public:
                 while (!glfwWindowShouldClose(glfwWindow))
                 {
                     glfwPollEvents();
-                    glfwHandler->drawNext();
+                    glfwHandler->nextFrame();
                 }
 
                 //vkDeviceWaitIdle(glfwHandler->vulkan->device);
