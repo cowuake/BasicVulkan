@@ -16,6 +16,15 @@ const std::vector<const char *> validationLayers {
     "VK_LAYER_KHRONOS_validation",
 };
 
+// static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+//     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
+//     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+// {
+//     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+//     return VK_FALSE;
+// }
+
 VulkanHandler::VulkanHandler(SDL_Window *window, char *name)
 {
     sdlWindow = window;
@@ -34,7 +43,9 @@ VulkanHandler::~VulkanHandler() {}
 
 void VulkanHandler::init()
 {
+    checkSupportedInstanceExtensions();
     createInstance(); // Depends on SDL/GLFW
+    checkAvailablePhysicalDevices();
     createDebug(); // Depends on SDL/GLFW
     createSurface();
     selectPhysicalDevice();
@@ -80,6 +91,54 @@ bool VulkanHandler::checkValidationLayers()
     }
 
     return true;
+}
+
+void VulkanHandler::checkSupportedInstanceExtensions()
+{
+    uint32_t extensionCount = 0;
+
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+    std::vector<VkExtensionProperties> extensions(extensionCount);
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+
+    std::cout << "------------------------------" << std::endl;
+    std::cout << "Supported instance extensions:" << std::endl;
+    std::cout << "------------------------------" << std::endl;
+
+    for (const auto &extension : extensions)
+    {
+        std::cout << '\t' << extension.extensionName << std::endl;
+    }
+}
+
+void VulkanHandler::checkAvailablePhysicalDevices()
+{
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0)
+    {
+        throw std::runtime_error("Failed to find device with Vulkan support!");
+    }
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "Available physical devices with Vulkan support:" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+
+    for (auto &device : devices)
+    {
+        VkPhysicalDeviceProperties deviceProps;
+        vkGetPhysicalDeviceProperties(device, &deviceProps);
+
+        std::cout << '\t' << "Vendor ID: " << deviceProps.vendorID << std::endl;
+        std::cout << '\t' << "Device name: " << deviceProps.deviceName << std::endl;
+        std::cout << '\t' << "Device type: " << deviceProps.deviceType << std::endl;
+        std::cout << '\t' << "Driver version: " << deviceProps.driverVersion << std::endl;
+        std::cout << '\t' << "" << std::endl;
+    }
 }
 
 std::vector<const char *> VulkanHandler::getRequiredInstanceExtensions()
@@ -155,16 +214,15 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanReportFunc(
 
 void VulkanHandler::createDebug()
 {
-    if (applicationType == ApplicationType::SDL)
-    {
-        SDL2_vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)SDL_Vulkan_GetVkGetInstanceProcAddr();
-
-        VkDebugReportCallbackCreateInfoEXT debugCallbackCreateInfo{
+    VkDebugReportCallbackCreateInfoEXT debugCallbackCreateInfo {
             .sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
             .flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT,
             .pfnCallback = VulkanReportFunc,
         };
 
+    if (applicationType == ApplicationType::SDL)
+    {
+        SDL2_vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)SDL_Vulkan_GetVkGetInstanceProcAddr();
         SDL2_vkCreateDebugReportCallbackEXT(instance, &debugCallbackCreateInfo, 0, &debugCallback);
     }
 }
@@ -182,7 +240,7 @@ void VulkanHandler::createSurface()
     {
         if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &surface) != VK_SUCCESS)
         {
-            throw std::runtime_error("failed to create window surface!");
+            throw std::runtime_error("Failed to create window surface!");
         }
     }
 }
@@ -196,7 +254,12 @@ void VulkanHandler::selectPhysicalDevice()
     physicalDevices.resize(physicalDeviceCount);
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
 
-    physical_devices = physicalDevices[0];
+    physicalDevice = physicalDevices[0];
+
+    if (physicalDevice == VK_NULL_HANDLE)
+    {
+        throw std::runtime_error("Failed to select a physical device!");
+    }
 }
 
 void VulkanHandler::selectQueueFamily()
@@ -204,9 +267,9 @@ void VulkanHandler::selectQueueFamily()
     std::vector<VkQueueFamilyProperties> queueFamilyProperties;
     uint32_t queueFamilyCount;
 
-    vkGetPhysicalDeviceQueueFamilyProperties(physical_devices, &queueFamilyCount, nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
     queueFamilyProperties.resize(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(physical_devices, &queueFamilyCount, queueFamilyProperties.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
 
     int graphicIndex = -1;
     int presentIndex = -1;
@@ -220,7 +283,7 @@ void VulkanHandler::selectQueueFamily()
         }
 
         VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physical_devices, i, surface, &presentSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
         if(queueFamily.queueCount > 0 && presentSupport)
         {
             presentIndex = i;
@@ -274,7 +337,6 @@ void VulkanHandler::createDevice()
         .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size()),
         .pQueueCreateInfos       = queueCreateInfos.data(),
-        //.pQueueCreateInfos       = &queueCreateInfo,
         .enabledLayerCount       = static_cast<uint32_t>(validationLayers.size()),
         .ppEnabledLayerNames     = validationLayers.data(),
         .enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size()),
@@ -282,7 +344,7 @@ void VulkanHandler::createDevice()
         .pEnabledFeatures        = &deviceFeatures,
     };
 
-    if (vkCreateDevice(physical_devices, &createInfo, nullptr, &device) != VK_SUCCESS)
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create device!");
     }
@@ -298,17 +360,17 @@ void VulkanHandler::createSwapchain(bool resize)
     uint32_t queueFamilyIndices[] {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
     int width, height = 0;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_devices, surface, &surfaceCapabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(
-        physical_devices, surface,
+        physicalDevice, surface,
         &surfaceFormatsCount,
         nullptr);
 
     surfaceFormats.resize(surfaceFormatsCount);
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(
-        physical_devices, surface,
+        physicalDevice, surface,
         &surfaceFormatsCount,
         surfaceFormats.data());
 
@@ -344,6 +406,10 @@ void VulkanHandler::createSwapchain(bool resize)
         .imageExtent      = swapchainSize,
         .imageArrayLayers = 1,
         .imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .preTransform     = surfaceCapabilities.currentTransform,
+        .compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode      = VK_PRESENT_MODE_FIFO_KHR,
+        .clipped          = VK_TRUE,
     };
 
     if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
@@ -356,11 +422,6 @@ void VulkanHandler::createSwapchain(bool resize)
     {
         createInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
     }
-
-    createInfo.preTransform     = surfaceCapabilities.currentTransform;
-    createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode      = VK_PRESENT_MODE_FIFO_KHR;
-    createInfo.clipped          = VK_TRUE;
 
     vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain);
     vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr);
@@ -429,7 +490,7 @@ VkBool32 VulkanHandler::getSupportedDepthFormat(VkPhysicalDevice physicalDevice,
 uint32_t VulkanHandler::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physical_devices, &memProperties);
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
     {
@@ -488,7 +549,7 @@ void VulkanHandler::createImage(
 
 void VulkanHandler::setupDepthStencil()
 {
-    VkBool32 validDepthFormat = getSupportedDepthFormat(physical_devices, &depthFormat);
+    VkBool32 validDepthFormat = getSupportedDepthFormat(physicalDevice, &depthFormat);
 
     createImage(
         swapchainSize.width, swapchainSize.height,

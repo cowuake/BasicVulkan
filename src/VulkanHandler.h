@@ -21,7 +21,7 @@ class VulkanHandler
         std::vector<VkExtensionProperties> instance_extension;
         VkDebugReportCallbackEXT debugCallback;
         VkSurfaceKHR surface;
-        VkPhysicalDevice physical_devices;
+        VkPhysicalDevice physicalDevice;
         uint32_t graphicsQueueFamilyIndex;
         uint32_t presentQueueFamilyIndex;
         VkSurfaceCapabilitiesKHR surfaceCapabilities;
@@ -60,6 +60,8 @@ class VulkanHandler
         void createSemaphores();
         void createFences();
         bool checkValidationLayers();
+        void checkSupportedInstanceExtensions();
+        void checkAvailablePhysicalDevices();
         std::vector<const char *> getRequiredInstanceExtensions();
 
     public:

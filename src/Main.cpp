@@ -19,6 +19,7 @@ public:
     GLFWwindow *glfwWindow;
     SDL_Event event;
     ApplicationType appType;
+    bool frameBufferResized;
 
     Application(enum ApplicationType type)
     {
@@ -51,8 +52,15 @@ public:
 
             glfwWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, glfwWindowName, nullptr, nullptr);
 
+            glfwSetFramebufferSizeCallback(glfwWindow, frameBufferResizeCallback);
+
             glfwHandler = std::unique_ptr<FrameDrawer>(new FrameDrawer(glfwWindow, glfwWindowName));
         }
+    }
+
+    static void frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
+        auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+        app->frameBufferResized = true;
     }
 
     void mainLoop()
@@ -130,7 +138,7 @@ int main(int argc, char *argv[])
 
         // sdl.join(); glfw.join();
 
-        glfwApp.run();
+        sdlApp.run();
     }
     catch (const std::exception &e)
     {
