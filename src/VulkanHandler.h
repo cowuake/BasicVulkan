@@ -59,9 +59,10 @@ class VulkanHandler
         void createSemaphore(VkSemaphore *semaphore);
         void createSemaphores();
         void createFences();
-        bool checkValidationLayers();
         void checkSupportedInstanceExtensions();
         void checkAvailablePhysicalDevices();
+        void checkValidationLayers();
+        void checkPhysicalDevice(VkPhysicalDevice *device);
         std::vector<const char *> getRequiredInstanceExtensions();
 
     public:

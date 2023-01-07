@@ -1,4 +1,5 @@
 #include <cstring>
+#include <fmt/format.h> // To be replaced with <format> as soon a larger compiler support is available
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -43,6 +44,7 @@ VulkanHandler::~VulkanHandler() {}
 
 void VulkanHandler::init()
 {
+    checkValidationLayers();
     checkSupportedInstanceExtensions();
     createInstance(); // Depends on SDL/GLFW
     checkAvailablePhysicalDevices();
@@ -63,36 +65,6 @@ void VulkanHandler::init()
     createFences();
 }
 
-bool VulkanHandler::checkValidationLayers()
-{
-    uint32_t layerCount;
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-    std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-    for (const char *layerName : validationLayers)
-    {
-        bool layerFound = false;
-
-        for (const auto &layerProperties : availableLayers)
-        {
-            if (strcmp(layerName, layerProperties.layerName) == 0)
-            {
-                layerFound = true;
-                break;
-            }
-        }
-
-        if (!layerFound)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void VulkanHandler::checkSupportedInstanceExtensions()
 {
     uint32_t extensionCount = 0;
@@ -108,6 +80,77 @@ void VulkanHandler::checkSupportedInstanceExtensions()
     for (const auto &extension : extensions)
     {
         std::cout << '\t' << extension.extensionName << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+// void VulkanHandler::checkValidationLayers()
+// {
+//     uint32_t layerCount;
+//     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+//     std::vector<VkLayerProperties> availableLayers(layerCount);
+//     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+//     for (const char *layerName : validationLayers)
+//     {
+//         bool layerFound = false;
+
+//         for (const auto &layerProperties : availableLayers)
+//         {
+//             if (strcmp(layerName, layerProperties.layerName) == 0)
+//             {
+//                 layerFound = true;
+//                 break;
+//             }
+//         }
+
+//         if (!layerFound)
+//         {
+//             throw std::runtime_error("Validation layers needed, but not available!");
+//         }
+//     }
+// }
+
+void VulkanHandler::checkValidationLayers()
+{
+    uint32_t propCount;
+
+    vkEnumerateInstanceLayerProperties(&propCount, nullptr);
+    std::vector<VkLayerProperties> layerProps(propCount);
+    vkEnumerateInstanceLayerProperties(&propCount, layerProps.data());
+
+    std::cout << "----------------" << std::endl;
+    std::cout << "Instance layers: " << std::endl;
+    std::cout << "----------------" << std::endl;
+
+    std::vector<bool> requestedLayerFound(validationLayers.size(), false);
+
+    for (auto &prop : layerProps)
+    {
+        std::cout << "\t" << "Layer Name: " << prop.layerName << std::endl;
+        std::cout << "\t" << "Description: " << prop.description << std::endl;
+        std::cout << "\t" << "Spec version: " << prop.specVersion << std::endl;
+        std::cout << "\t" << "Implementation version: " << prop.implementationVersion << std::endl;
+
+        for (int i = 0; i < validationLayers.size(); i++)
+        {
+            if (strcmp(validationLayers[i], prop.layerName) == 0)
+            {
+                requestedLayerFound[i] = true;
+                break;
+            }
+        }
+
+        std::cout << std::endl;
+    }
+
+    for (int i = 0; i < requestedLayerFound.size(); i++)
+    {
+        if (!requestedLayerFound[i])
+        {
+            throw std::runtime_error(fmt::format("Layer {} requested but not available!", validationLayers[i]));
+        }
     }
 }
 
@@ -130,15 +173,26 @@ void VulkanHandler::checkAvailablePhysicalDevices()
 
     for (auto &device : devices)
     {
-        VkPhysicalDeviceProperties deviceProps;
-        vkGetPhysicalDeviceProperties(device, &deviceProps);
-
-        std::cout << '\t' << "Vendor ID: " << deviceProps.vendorID << std::endl;
-        std::cout << '\t' << "Device name: " << deviceProps.deviceName << std::endl;
-        std::cout << '\t' << "Device type: " << deviceProps.deviceType << std::endl;
-        std::cout << '\t' << "Driver version: " << deviceProps.driverVersion << std::endl;
-        std::cout << '\t' << "" << std::endl;
+        checkPhysicalDevice(&device);
     }
+}
+
+void VulkanHandler::checkPhysicalDevice(VkPhysicalDevice *device)
+{
+    VkPhysicalDeviceProperties deviceProps;
+    vkGetPhysicalDeviceProperties(*device, &deviceProps);
+
+    std::cout << '\t' << "Vendor ID: " << deviceProps.vendorID << std::endl;
+    std::cout << '\t' << "Device name: " << deviceProps.deviceName << std::endl;
+    std::cout << '\t' << "Device type: " << deviceProps.deviceType << std::endl;
+    std::cout << '\t' << "Driver version: " << deviceProps.driverVersion << std::endl;
+    std::cout << '\t' << "" << std::endl;
+
+    // TODO: Consider printing a list of selected features to be checked
+    // -----------------------------------------------------------------
+    // VkPhysicalDeviceFeatures deviceFeats;
+    // vkGetPhysicalDeviceFeatures(*device, &deviceFeats);
+    // ...
 }
 
 std::vector<const char *> VulkanHandler::getRequiredInstanceExtensions()
@@ -167,11 +221,6 @@ std::vector<const char *> VulkanHandler::getRequiredInstanceExtensions()
 
 void VulkanHandler::createInstance()
 {
-    if (!checkValidationLayers())
-    {
-        throw std::runtime_error("Validation layers needed, but not available!");
-    }
-
     VkApplicationInfo appInfo {
         .sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName   = windowName,
@@ -260,6 +309,11 @@ void VulkanHandler::selectPhysicalDevice()
     {
         throw std::runtime_error("Failed to select a physical device!");
     }
+
+    std::cout << "-------------------------" << std::endl;
+    std::cout << "Selected physical device:" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    checkPhysicalDevice(&physicalDevice);
 }
 
 void VulkanHandler::selectQueueFamily()

@@ -1,5 +1,5 @@
 #ifndef VULKAN_FRAME_DRAWER_H_
-#define VULKAN_FRAME_DRAWERp_H_
+#define VULKAN_FRAME_DRAWER_H_
 
 #include <SDL.h>
 #include <vulkan/vulkan.h>
