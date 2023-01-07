@@ -34,7 +34,6 @@ class VulkanHandler
         VkImageView depthImageView;
         PFN_vkCreateDebugReportCallbackEXT SDL2_vkCreateDebugReportCallbackEXT;
         VkPipelineLayout pipelineLayout;
-        VkPipeline graphicsPipeline;
 
         VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -76,6 +75,7 @@ class VulkanHandler
         VkExtent2D swapchainSize;
         VkQueue graphicsQueue;
         VkQueue presentQueue;
+        VkPipeline graphicsPipeline;
         VkRenderPass renderPass;
         VkSemaphore imageAvailableSemaphore;
         VkSemaphore renderingFinishedSemaphore;

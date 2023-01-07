@@ -32,6 +32,7 @@ private:
     void setViewport();
     void setScissor();
     void draw();
+    void bindGraphicsPipelineToCommandBuffer();
 
 public:
     VulkanHandler *vulkan;

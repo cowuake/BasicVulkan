@@ -105,6 +105,11 @@ void FrameDrawer::beginRenderPass()
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
+void FrameDrawer::bindGraphicsPipelineToCommandBuffer()
+{
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkan->graphicsPipeline);
+}
+
 void FrameDrawer::endRenderPass()
 {
     vkCmdEndRenderPass(commandBuffer);
@@ -200,14 +205,19 @@ void FrameDrawer::setClearColor(int R, int G, int B)
 void FrameDrawer::nextFrame()
 {
     acquireNextImage();
+
     resetCommandBuffer();
     beginCommandBuffer();
+
     beginRenderPass();
+    bindGraphicsPipelineToCommandBuffer();
     setViewport();
     setScissor();
     draw();
     endRenderPass();
+
     endCommandBuffer();
+
     queueSubmit();
     queuePresent();
 }
