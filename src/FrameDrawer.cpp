@@ -152,13 +152,13 @@ void FrameDrawer::queuePresent()
     }
 }
 
-void FrameDrawer::setViewport(int width, int height)
+void FrameDrawer::setViewport()
 {
     VkViewport viewport {
         .x        = 0,
         .y        = 0,
-        .width    = (float)width / 2,
-        .height   = (float)height,
+        .width    = (float)vulkan->swapchainSize.width / 2,
+        .height   = (float)vulkan->swapchainSize.height,
         .minDepth = (float)0.0f,
         .maxDepth = (float)1.0f,
     };
@@ -166,7 +166,7 @@ void FrameDrawer::setViewport(int width, int height)
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 }
 
-void FrameDrawer::setScissor(int width, int height)
+void FrameDrawer::setScissor()
 {
     VkRect2D scissor {
         .offset {
@@ -174,8 +174,8 @@ void FrameDrawer::setScissor(int width, int height)
             .y      = 0,
         },
         .extent {
-            .width  = static_cast<uint32_t>(width / 2),
-            .height = static_cast<uint32_t>(height),
+            .width  = static_cast<uint32_t>(vulkan->swapchainSize.width / 2),
+            .height = static_cast<uint32_t>(vulkan->swapchainSize.height),
         },
     };
 
@@ -203,8 +203,8 @@ void FrameDrawer::nextFrame()
     resetCommandBuffer();
     beginCommandBuffer();
     beginRenderPass();
-    setViewport(1280, 720);
-    setScissor(1280, 720);
+    setViewport();
+    setScissor();
     draw();
     endRenderPass();
     endCommandBuffer();

@@ -29,8 +29,8 @@ private:
     void freeCommandBuffers();
     void queueSubmit();
     void queuePresent();
-    void setViewport(int width, int height);
-    void setScissor(int width, int height);
+    void setViewport();
+    void setScissor();
     void draw();
 
 public:
