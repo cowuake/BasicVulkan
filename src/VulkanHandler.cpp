@@ -13,8 +13,9 @@
 
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 
-const std::vector<const char *> validationLayers {
+const std::vector<const char *> requiredInstanceLayers {
     "VK_LAYER_KHRONOS_validation",
+    // VK_KHR_SURFACE_EXTENSION_NAME,
 };
 
 // static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -44,9 +45,9 @@ VulkanHandler::~VulkanHandler() {}
 
 void VulkanHandler::init()
 {
-    checkValidationLayers();
+    checkInstanceLayers();
     checkSupportedInstanceExtensions();
-    createInstance(); // Depends on SDL/GLFW
+    createInstance();
     checkAvailablePhysicalDevices();
     createDebug(); // Depends on SDL/GLFW
     createSurface();
@@ -84,35 +85,7 @@ void VulkanHandler::checkSupportedInstanceExtensions()
     std::cout << std::endl;
 }
 
-// void VulkanHandler::checkValidationLayers()
-// {
-//     uint32_t layerCount;
-//     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-//     std::vector<VkLayerProperties> availableLayers(layerCount);
-//     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-//     for (const char *layerName : validationLayers)
-//     {
-//         bool layerFound = false;
-
-//         for (const auto &layerProperties : availableLayers)
-//         {
-//             if (strcmp(layerName, layerProperties.layerName) == 0)
-//             {
-//                 layerFound = true;
-//                 break;
-//             }
-//         }
-
-//         if (!layerFound)
-//         {
-//             throw std::runtime_error("Validation layers needed, but not available!");
-//         }
-//     }
-// }
-
-void VulkanHandler::checkValidationLayers()
+void VulkanHandler::checkInstanceLayers()
 {
     uint32_t propCount;
 
@@ -124,7 +97,7 @@ void VulkanHandler::checkValidationLayers()
     std::cout << "Instance layers: " << std::endl;
     std::cout << "----------------" << std::endl;
 
-    std::vector<bool> requestedLayerFound(validationLayers.size(), false);
+    std::vector<bool> requestedLayerFound(requiredInstanceLayers.size(), false);
 
     for (auto &prop : layerProps)
     {
@@ -133,9 +106,9 @@ void VulkanHandler::checkValidationLayers()
         std::cout << "\t" << "Spec version: " << prop.specVersion << std::endl;
         std::cout << "\t" << "Implementation version: " << prop.implementationVersion << std::endl;
 
-        for (int i = 0; i < validationLayers.size(); i++)
+        for (int i = 0; i < requiredInstanceLayers.size(); i++)
         {
-            if (strcmp(validationLayers[i], prop.layerName) == 0)
+            if (strcmp(requiredInstanceLayers[i], prop.layerName) == 0)
             {
                 requestedLayerFound[i] = true;
                 break;
@@ -149,7 +122,7 @@ void VulkanHandler::checkValidationLayers()
     {
         if (!requestedLayerFound[i])
         {
-            throw std::runtime_error(fmt::format("Layer {} requested but not available!", validationLayers[i]));
+            throw std::runtime_error(fmt::format("Layer {} requested but not available!", requiredInstanceLayers[i]));
         }
     }
 }
@@ -235,8 +208,8 @@ void VulkanHandler::createInstance()
     VkInstanceCreateInfo instanceCreateInfo {
         .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo        = &appInfo,
-        .enabledLayerCount       = static_cast<uint32_t>(validationLayers.size()),
-        .ppEnabledLayerNames     = validationLayers.data(),
+        .enabledLayerCount       = static_cast<uint32_t>(requiredInstanceLayers.size()),
+        .ppEnabledLayerNames     = requiredInstanceLayers.data(),
         .enabledExtensionCount   = static_cast<uint32_t>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
     };
@@ -280,7 +253,7 @@ void VulkanHandler::createSurface()
 {
     if (applicationType == ApplicationType::SDL)
     {
-        if (SDL_Vulkan_CreateSurface(sdlWindow, instance, &surface) != VK_SUCCESS)
+        if (SDL_Vulkan_CreateSurface(sdlWindow, instance, &surface) == SDL_FALSE)
         {
             throw std::runtime_error("Failed to create window surface!");
         }
@@ -391,8 +364,8 @@ void VulkanHandler::createDevice()
         .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size()),
         .pQueueCreateInfos       = queueCreateInfos.data(),
-        .enabledLayerCount       = static_cast<uint32_t>(validationLayers.size()),
-        .ppEnabledLayerNames     = validationLayers.data(),
+        .enabledLayerCount       = static_cast<uint32_t>(requiredInstanceLayers.size()),
+        .ppEnabledLayerNames     = requiredInstanceLayers.data(),
         .enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size()),
         .ppEnabledExtensionNames = deviceExtensions.data(),
         .pEnabledFeatures        = &deviceFeatures,

@@ -61,7 +61,7 @@ class VulkanHandler
         void createFences();
         void checkSupportedInstanceExtensions();
         void checkAvailablePhysicalDevices();
-        void checkValidationLayers();
+        void checkInstanceLayers();
         void checkPhysicalDevice(VkPhysicalDevice *device);
         std::vector<const char *> getRequiredInstanceExtensions();
 

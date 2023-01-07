@@ -1,5 +1,5 @@
 build
-src/test.cpp
+src/test*.cpp
 
 .vscode/**/*
 !.vscode/settings.json

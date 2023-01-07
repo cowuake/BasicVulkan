@@ -33,7 +33,10 @@ public:
             std::string sdlWindowNameStr = "SDL2 Vulkan Demo";
             char *sdlWindowName = sdlWindowNameStr.data();
 
-            SDL_Init(SDL_INIT_EVERYTHING);
+            if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+            {
+                throw std::runtime_error("Failed to init SDL!");
+            }
 
             sdlWindow = SDL_CreateWindow(
                 sdlWindowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
@@ -95,7 +98,7 @@ public:
                     glfwHandler->drawNext();
                 }
 
-                vkDeviceWaitIdle(glfwHandler->vulkan->device);
+                //vkDeviceWaitIdle(glfwHandler->vulkan->device);
             }
         }
     }
@@ -133,12 +136,10 @@ int main(int argc, char *argv[])
 
     try
     {
-        // std::thread sdl {&Application::run, &sdlApp};
-        // std::thread glfw {&Application::run, &glfwApp};
+        std::thread sdl {&Application::run, &sdlApp};
+        std::thread glfw {&Application::run, &glfwApp};
 
-        // sdl.join(); glfw.join();
-
-        sdlApp.run();
+        sdl.join(); glfw.join();
     }
     catch (const std::exception &e)
     {
