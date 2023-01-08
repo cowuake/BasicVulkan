@@ -81,6 +81,8 @@ class VulkanHandler
         VkSemaphore renderingFinishedSemaphore;
         VkSwapchainKHR swapchain;
 
+        int MAX_FRAMES_IN_FLIGHT;
+
         VulkanHandler(SDL_Window *sdlWindow, char *sdlWindowName);
         VulkanHandler(GLFWwindow *glfwWindow, char *glfwWindowName);
 

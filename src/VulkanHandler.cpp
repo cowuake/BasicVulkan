@@ -34,6 +34,7 @@ VulkanHandler::VulkanHandler(SDL_Window *window, char *name)
     sdlWindow = window;
     windowName = name;
     applicationType = ApplicationType::SDL;
+    MAX_FRAMES_IN_FLIGHT = 2;
 }
 
 VulkanHandler::VulkanHandler(GLFWwindow *window, char *name)
@@ -41,6 +42,7 @@ VulkanHandler::VulkanHandler(GLFWwindow *window, char *name)
     glfwWindow = window;
     windowName = name;
     applicationType = ApplicationType::GLFW;
+    MAX_FRAMES_IN_FLIGHT = 2;
 }
 
 VulkanHandler::~VulkanHandler() {}
@@ -394,19 +396,22 @@ void VulkanHandler::createSwapchain(bool resize)
     uint32_t queueFamilyIndices[] {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
     int width, height = 0;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
+    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to get physical device surface capabilities!");
+    }
 
-    vkGetPhysicalDeviceSurfaceFormatsKHR(
-        physicalDevice, surface,
-        &surfaceFormatsCount,
-        nullptr);
+    if (vkGetPhysicalDeviceSurfaceFormatsKHR (physicalDevice, surface, &surfaceFormatsCount, nullptr) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to get physical device surface formats!");
+    }
 
     surfaceFormats.resize(surfaceFormatsCount);
 
-    vkGetPhysicalDeviceSurfaceFormatsKHR(
-        physicalDevice, surface,
-        &surfaceFormatsCount,
-        surfaceFormats.data());
+    if (vkGetPhysicalDeviceSurfaceFormatsKHR (physicalDevice, surface, &surfaceFormatsCount, surfaceFormats.data()) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to get physical device surface formats!");
+    }
 
     // if(surfaceFormats[0].format != VK_FORMAT_B8G8R8A8_UNORM)
     // {
@@ -429,17 +434,17 @@ void VulkanHandler::createSwapchain(bool resize)
     // Number of images to have in the swap chain
     // Incrementing the minimum of at least 1 is recommended since it allow to acquire an
     //  additional image to render instead of waiting for completion of driver internal operations
-    uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
+    swapchainImageCount = surfaceCapabilities.minImageCount + 1;
 
-    if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
+    if (surfaceCapabilities.maxImageCount > 0 && swapchainImageCount > surfaceCapabilities.maxImageCount)
     {
-        imageCount = surfaceCapabilities.maxImageCount;
+        swapchainImageCount = surfaceCapabilities.maxImageCount;
     }
 
     VkSwapchainCreateInfoKHR createInfo {
         .sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface          = surface,
-        .minImageCount    = surfaceCapabilities.minImageCount,
+        .minImageCount    = swapchainImageCount,
         .imageFormat      = surfaceFormat.format,
         .imageColorSpace  = surfaceFormat.colorSpace,
         .imageExtent      = swapchainSize,
@@ -462,7 +467,11 @@ void VulkanHandler::createSwapchain(bool resize)
         createInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain);
+    if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create swap chain!");
+    }
+
     vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr);
     swapchainImages.resize(swapchainImageCount);
     vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, swapchainImages.data());
@@ -892,14 +901,14 @@ void VulkanHandler::createCommandPool()
 
 void VulkanHandler::createCommandBuffers()
 {
+    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
     VkCommandBufferAllocateInfo allocateInfo {
         .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool        = commandPool,
         .level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = swapchainImageCount,
+        .commandBufferCount = static_cast<uint32_t>(commandBuffers.size()),
     };
-
-    commandBuffers.resize(swapchainImageCount);
 
     if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
     {
@@ -909,8 +918,9 @@ void VulkanHandler::createCommandBuffers()
 
 void VulkanHandler::createSemaphore(VkSemaphore *semaphore)
 {
-    VkSemaphoreCreateInfo createInfo {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    VkSemaphoreCreateInfo createInfo {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
 
     if (vkCreateSemaphore(device, &createInfo, nullptr, semaphore) != VK_SUCCESS)
     {
@@ -926,10 +936,9 @@ void VulkanHandler::createSemaphores()
 
 void VulkanHandler::createFences()
 {
-    uint32_t i;
-    fences.resize(swapchainImageCount);
+    fences.resize(MAX_FRAMES_IN_FLIGHT);
 
-    for (i = 0; i < swapchainImageCount; i++)
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkResult result;
 

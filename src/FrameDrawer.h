@@ -13,7 +13,7 @@ private:
     GLFWwindow *glfwWindow;
 
     char *windowName;
-    uint32_t frameIndex;
+    uint32_t frameIndex, imageIndex;
     VkCommandBuffer commandBuffer;
     VkImage image;
     VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;

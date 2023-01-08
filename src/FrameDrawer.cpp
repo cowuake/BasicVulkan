@@ -12,6 +12,8 @@ FrameDrawer::FrameDrawer(SDL_Window *window, char *name)
 
     vulkan = new VulkanHandler(sdlWindow, windowName);
     vulkan->init();
+
+    frameIndex = 0;
 }
 
 FrameDrawer::FrameDrawer(GLFWwindow *window, char *name)
@@ -21,25 +23,27 @@ FrameDrawer::FrameDrawer(GLFWwindow *window, char *name)
 
     vulkan = new VulkanHandler(glfwWindow, windowName);
     vulkan->init();
+
+    frameIndex = 0;
 }
 
 FrameDrawer::~FrameDrawer() {}
 
 void FrameDrawer::acquireNextImage()
 {
+    if (vkWaitForFences(vulkan->device, 1, &vulkan->fences[frameIndex], VK_FALSE, UINT64_MAX) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to wait for fences");
+    }
+
     vkAcquireNextImageKHR (
         vulkan->device,
         vulkan->swapchain,
         UINT64_MAX,
         vulkan->imageAvailableSemaphore,
         VK_NULL_HANDLE,
-        &frameIndex
+        &imageIndex
     );
-
-    if (vkWaitForFences(vulkan->device, 1, &vulkan->fences[frameIndex], VK_FALSE, UINT64_MAX) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to wait for fences");
-    }
 
     if (vkResetFences(vulkan->device, 1, &vulkan->fences[frameIndex]) != VK_SUCCESS)
     {
@@ -93,7 +97,7 @@ void FrameDrawer::beginRenderPass()
     VkRenderPassBeginInfo renderPassInfo {
         .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass      = vulkan->renderPass,
-        .framebuffer     = vulkan->swapchainFramebuffers[frameIndex],
+        .framebuffer     = vulkan->swapchainFramebuffers[imageIndex],
         .renderArea {
             .offset      = {0, 0},
             .extent      = vulkan->swapchainSize,
@@ -142,7 +146,7 @@ void FrameDrawer::queuePresent()
         .pWaitSemaphores    = &vulkan->renderingFinishedSemaphore,
         .swapchainCount     = 1,
         .pSwapchains        = &vulkan->swapchain,
-        .pImageIndices      = &frameIndex,
+        .pImageIndices      = &imageIndex,
         .pResults           = nullptr,
     };
 
@@ -155,6 +159,8 @@ void FrameDrawer::queuePresent()
     {
         throw std::runtime_error("");
     }
+
+    frameIndex = (frameIndex + 1) % vulkan->MAX_FRAMES_IN_FLIGHT;
 }
 
 void FrameDrawer::setViewport()
