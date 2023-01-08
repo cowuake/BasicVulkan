@@ -62,7 +62,8 @@ public:
         }
     }
 
-    static void frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
+    static void frameBufferResizeCallback(GLFWwindow* window, int width, int height)
+    {
         auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
         app->frameBufferResized = true;
     }
@@ -78,7 +79,7 @@ public:
 
         if (appType == SDL)
         {
-            sdlHandler->setClearColor(r, g, b);
+            // sdlHandler->setClearColor(r, g, b);
 
             int currentR = 0, currentG = 0, currentB = 0;
 
@@ -109,35 +110,36 @@ public:
                 sdlHandler->nextFrame();
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         else if (appType == GLFW)
         {
+            // sdlHandler->setClearColor(r, g, b);
+
+            int currentR = 0, currentG = 0, currentB = 0;
+
             while (glfwRunning)
             {
                 while (!glfwWindowShouldClose(glfwWindow))
                 {
                     glfwPollEvents();
+
+                    if (currentR == 0)
+                    {
+                        currentFunction = add;
+                    }
+                    else if (currentR == 255)
+                    {
+                        currentFunction = subtract;
+                    }
+
+                    currentR = currentFunction(currentR, 1);
+                    currentG = currentFunction(currentG, 1);
+                    currentB = currentFunction(currentB, 1);
+                    glfwHandler->setClearColor(currentR, currentG, currentB);
+
                     glfwHandler->nextFrame();
                 }
 
-                //vkDeviceWaitIdle(glfwHandler->vulkan->device);
+                // vkDeviceWaitIdle(glfwHandler->vulkan->device);
             }
         }
     }
