@@ -18,6 +18,8 @@ const std::vector<const char *> requiredInstanceLayers {
     // VK_KHR_SURFACE_EXTENSION_NAME,
 };
 
+const std::vector<const char*> deviceExtensions {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
 // static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 //     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
 //     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
@@ -335,7 +337,6 @@ void VulkanHandler::selectQueueFamily()
 
 void VulkanHandler::createDevice()
 {
-    const std::vector<const char*> deviceExtensions {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     const float queue_priority[] { 1.0f };
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -420,6 +421,7 @@ void VulkanHandler::createSwapchain(bool resize)
 
     width = CLAMP(width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
     height = CLAMP(height, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
+
     swapchainSize.width = width;
     swapchainSize.height = height;
 
@@ -596,7 +598,7 @@ void VulkanHandler::createRenderPass()
 {
     std::vector<VkAttachmentDescription> attachments;
 
-    VkAttachmentDescription attachment1 {
+    VkAttachmentDescription colorAttachment {
         .format         = surfaceFormat.format,
         .samples        = VK_SAMPLE_COUNT_1_BIT,
         .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -606,9 +608,9 @@ void VulkanHandler::createRenderPass()
         .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
         .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
-    attachments.push_back(attachment1);
+    attachments.push_back(colorAttachment);
 
-    VkAttachmentDescription attachment2 {
+    VkAttachmentDescription depthAttachment {
         .format         = depthFormat,
         .samples        = VK_SAMPLE_COUNT_1_BIT,
         .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -618,7 +620,7 @@ void VulkanHandler::createRenderPass()
         .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
         .finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
-    attachments.push_back(attachment2);
+    attachments.push_back(depthAttachment);
 
     VkAttachmentReference colorReference {
         .attachment = 0,

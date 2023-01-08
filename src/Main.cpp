@@ -1,3 +1,4 @@
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -68,12 +69,18 @@ public:
 
     void mainLoop()
     {
+        const std::function<int(int, int)> add = std::plus<int>();
+        const std::function<int(int, int)> subtract = std::minus<int>();
+        std::function<int(int, int)> currentFunction;
+
         bool sdlRunning = true, glfwRunning = true;
         int r = 112, g = 66, b = 20;
 
         if (appType == SDL)
         {
             sdlHandler->setClearColor(r, g, b);
+
+            int currentR = 0, currentG = 0, currentB = 0;
 
             while (sdlRunning)
             {
@@ -85,9 +92,41 @@ public:
                     }
                 }
 
+                if (currentR == 0)
+                {
+                    currentFunction = add;
+                }
+                else if (currentR == 255)
+                {
+                    currentFunction = subtract;
+                }
+
+                currentR = currentFunction(currentR, 1);
+                currentG = currentFunction(currentG, 1);
+                currentB = currentFunction(currentB, 1);
+                sdlHandler->setClearColor(currentR, currentG, currentB);
+
                 sdlHandler->nextFrame();
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         else if (appType == GLFW)
         {
             while (glfwRunning)
