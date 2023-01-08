@@ -166,12 +166,12 @@ void FrameDrawer::queuePresent()
 void FrameDrawer::setViewport()
 {
     VkViewport viewport {
-        .x        = 0,
-        .y        = 0,
-        .width    = (float)vulkan->swapchainSize.width / 2,
+        .x        = 0.0f,
+        .y        = 0.0f,
+        .width    = (float)vulkan->swapchainSize.width,
         .height   = (float)vulkan->swapchainSize.height,
-        .minDepth = (float)0.0f,
-        .maxDepth = (float)1.0f,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
     };
 
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -185,7 +185,7 @@ void FrameDrawer::setScissor()
             .y      = 0,
         },
         .extent {
-            .width  = static_cast<uint32_t>(vulkan->swapchainSize.width / 2),
+            .width  = static_cast<uint32_t>(vulkan->swapchainSize.width),
             .height = static_cast<uint32_t>(vulkan->swapchainSize.height),
         },
     };
