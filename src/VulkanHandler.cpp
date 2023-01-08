@@ -338,12 +338,12 @@ void VulkanHandler::selectQueueFamily()
 
 void VulkanHandler::createDevice()
 {
-    const float queuePriority[]{1.0f};
+    const float queuePriorities[] {1.0f};
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
 
-    float queuePriority = queuePriority[0];
+    float queuePriority = queuePriorities[0];
     for (int queueFamily : uniqueQueueFamilies)
     {
         VkDeviceQueueCreateInfo queueCreateInfo {
