@@ -841,7 +841,7 @@ void VulkanHandler::createGraphicsPipeline()
         .renderPass          = renderPass,
         .subpass             = 0,
         .basePipelineHandle  = VK_NULL_HANDLE,
-        .basePipelineIndex   = -1,
+        //.basePipelineIndex   = -1,
     };
 
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
@@ -882,8 +882,6 @@ void VulkanHandler::createFramebuffers()
 
 void VulkanHandler::createCommandPool()
 {
-    VkResult result;
-
     VkCommandPoolCreateInfo createInfo {
         .sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,

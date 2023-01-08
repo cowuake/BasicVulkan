@@ -150,6 +150,7 @@ void FrameDrawer::queuePresent()
         .pResults           = nullptr,
     };
 
+    // This should make the triangle appear!
     if (vkQueuePresentKHR(vulkan->presentQueue, &presentInfo) != VK_SUCCESS)
     {
         throw std::runtime_error("");
