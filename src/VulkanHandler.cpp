@@ -238,11 +238,12 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanReportFunc(
 
 void VulkanHandler::createDebug()
 {
-    VkDebugReportCallbackCreateInfoEXT debugCallbackCreateInfo {
-            .sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
-            .flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT,
-            .pfnCallback = VulkanReportFunc,
-        };
+    VkDebugReportCallbackCreateInfoEXT debugCallbackCreateInfo
+    {
+        .sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
+        .flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT,
+        .pfnCallback = VulkanReportFunc,
+    };
 
     if (applicationType == ApplicationType::SDL)
     {
@@ -304,9 +305,9 @@ void VulkanHandler::selectQueueFamily()
     int presentIndex = -1;
 
     int i = 0;
-    for(const auto& queueFamily : queueFamilyProperties)
+    for (const auto &queueFamily : queueFamilyProperties)
     {
-        if(queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
             graphicIndex = i;
         }
@@ -318,12 +319,12 @@ void VulkanHandler::selectQueueFamily()
             throw std::runtime_error("Failed to get physical device surface support!");
         }
 
-        if(queueFamily.queueCount > 0 && presentSupport)
+        if (queueFamily.queueCount > 0 && presentSupport)
         {
             presentIndex = i;
         }
 
-        if(graphicIndex != -1 && presentIndex != -1)
+        if (graphicIndex != -1 && presentIndex != -1)
         {
             break;
         }
@@ -337,13 +338,13 @@ void VulkanHandler::selectQueueFamily()
 
 void VulkanHandler::createDevice()
 {
-    const float queue_priority[] { 1.0f };
+    const float queuePriority[]{1.0f};
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
+    std::set<uint32_t> uniqueQueueFamilies {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
 
-    float queuePriority = queue_priority[0];
-    for(int queueFamily : uniqueQueueFamilies)
+    float queuePriority = queuePriority[0];
+    for (int queueFamily : uniqueQueueFamilies)
     {
         VkDeviceQueueCreateInfo queueCreateInfo {
             .sType            =  VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -425,7 +426,11 @@ void VulkanHandler::createSwapchain(bool resize)
     swapchainSize.width = width;
     swapchainSize.height = height;
 
+    // Number of images to have in the swap chain
+    // Incrementing the minimum of at least 1 is recommended since it allow to acquire an
+    //  additional image to render instead of waiting for completion of driver internal operations
     uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
+
     if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
     {
         imageCount = surfaceCapabilities.maxImageCount;
@@ -539,8 +544,8 @@ uint32_t VulkanHandler::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlag
 
 void VulkanHandler::createImage(
     uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
-    VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image,
-    VkDeviceMemory& imageMemory)
+    VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image,
+    VkDeviceMemory &imageMemory)
 {
     VkImageCreateInfo imageInfo {
         .sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -574,7 +579,8 @@ void VulkanHandler::createImage(
         .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties),
     };
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to allocate image memory!");
     }
 
@@ -644,7 +650,7 @@ void VulkanHandler::createRenderPass()
         .pPreserveAttachments    = nullptr,
     };
 
-	std::vector<VkSubpassDependency> dependencies;
+    std::vector<VkSubpassDependency> dependencies;
 
     VkSubpassDependency dependency {
         .srcSubpass      = VK_SUBPASS_EXTERNAL,
@@ -780,7 +786,7 @@ void VulkanHandler::createGraphicsPipeline()
         .logicOp = VK_LOGIC_OP_COPY,
         .attachmentCount = 1,
         .pAttachments = &colorBlendAttachment,
-        .blendConstants { 0.0f, 0.0f, 0.0f, 0.0f },
+        .blendConstants {0.0f, 0.0f, 0.0f, 0.0f},
     };
 
     std::vector<VkDynamicState> dynamicStates {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
@@ -923,7 +929,7 @@ void VulkanHandler::createFences()
     uint32_t i;
     fences.resize(swapchainImageCount);
 
-    for(i = 0; i < swapchainImageCount; i++)
+    for (i = 0; i < swapchainImageCount; i++)
     {
         VkResult result;
 
